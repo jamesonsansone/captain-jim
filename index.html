@@ -5,289 +5,352 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Captain Jim - Official Archive</title>
     <style>
-        /* --- VISUAL THEME: WW2 FIELD OFFICE --- */
+        /* --- VISUAL THEME: Modern Military History --- */
         :root {
             --army-green: #4b5320;
+            --dark-green: #2c3310;
             --paper-tan: #f4e4bc;
-            --ink-black: #1a1a1a;
-            --faded-brown: #8b7355;
-            --alert-red: #8b0000;
+            --text-dark: #1a1a1a;
+            --highlight: #8b7355;
+            --accent-red: #8b0000;
         }
 
         body {
             background-color: var(--army-green);
-            font-family: 'Courier New', Courier, monospace; /* Typewriter Font */
-            color: var(--ink-black);
-            padding: 40px;
-            display: flex;
-            justify_content: center;
+            color: var(--text-dark);
+            font-family: 'Georgia', 'Courier New', serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
         }
 
-        .container {
-            background-color: var(--paper-tan);
-            width: 100%;
-            max-width: 900px;
-            padding: 60px;
-            border: 12px solid var(--faded-brown);
-            box-shadow: 20px 20px 40px rgba(0,0,0,0.6);
-        }
-
-        h1 {
+        /* HERO SECTION */
+        header {
+            background-color: var(--dark-green);
+            color: var(--paper-tan);
+            padding: 60px 20px;
             text-align: center;
-            text-transform: uppercase;
-            border-bottom: 4px double var(--ink-black);
-            padding-bottom: 10px;
-            letter-spacing: 2px;
-            margin-top: 0;
+            border-bottom: 8px solid var(--highlight);
         }
 
-        /* Input Section */
-        .input-group {
+        header h1 {
+            margin: 0;
+            font-size: 3em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        /* MAIN LAYOUT */
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--paper-tan);
+            min-height: 100vh;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        /* SEARCH BAR */
+        .search-container {
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .input-wrapper {
             display: flex;
-            border: 3px solid var(--ink-black);
-            margin-bottom: 40px;
+            max-width: 700px;
+            margin: 0 auto;
+            border: 3px solid var(--dark-green);
         }
 
         input {
             flex-grow: 1;
-            padding: 15px;
-            font-family: inherit;
+            padding: 15px 20px;
             font-size: 18px;
-            background: #fffdf0;
             border: none;
+            background: #fff;
             outline: none;
+            font-family: inherit;
         }
 
-        button {
-            background: var(--ink-black);
+        button.search-btn {
+            background: var(--dark-green);
             color: var(--paper-tan);
             border: none;
             padding: 0 30px;
-            font-family: inherit;
-            font-weight: bold;
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
+            transition: background 0.3s;
         }
 
-        button:hover {
-            background: var(--alert-red);
+        button.search-btn:hover {
+            background: var(--highlight);
         }
 
-        /* --- SUMMARY SECTION --- */
-        h3 {
-            background: var(--ink-black);
-            color: var(--paper-tan);
-            padding: 8px 15px;
-            display: inline-block;
+        /* AI SUMMARY SECTION */
+        .summary-section {
+            margin-bottom: 60px;
+            display: none; /* Hidden until search */
+        }
+
+        .section-label {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: var(--highlight);
             text-transform: uppercase;
-            margin-top: 40px;
-            font-size: 1.1em;
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--highlight);
+            margin-bottom: 20px;
+            display: inline-block;
         }
 
-        .summary-box {
-            border-left: 6px solid var(--ink-black);
-            padding: 15px 25px;
-            font-size: 1.1em;
-            line-height: 1.6;
-            background: rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+        .summary-text {
+            font-size: 1.15em;
+            padding: 20px;
+            border-left: 5px solid var(--dark-green);
+            background: rgba(255,255,255,0.4);
             white-space: pre-wrap;
         }
 
-        /* --- EXCERPT CARDS --- */
-        .excerpt-list {
+        /* EXCERPTS GRID (Flex/Grid Hybrid) */
+        .excerpts-container {
+            display: none; /* Hidden until search */
+        }
+
+        .excerpts-grid {
             display: grid;
+            grid-template-columns: 1fr;
             gap: 25px;
-            margin-top: 20px;
         }
 
-        .excerpt-card {
+        @media (min-width: 768px) {
+            .excerpts-grid {
+                grid-template-columns: 1fr 1fr; /* 2 Columns on Desktop */
+            }
+        }
+
+        /* AUDIO PLAYER CARD */
+        .audio-card {
             background: #fff;
-            border: 2px solid var(--ink-black);
+            border: 1px solid var(--highlight);
             padding: 20px;
-            position: relative;
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.15);
-            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
 
-        .excerpt-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--alert-red);
+        .audio-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 8px 8px 20px rgba(0,0,0,0.15);
         }
 
-        .excerpt-meta {
-            font-size: 0.8em;
-            color: var(--alert-red);
+        .card-header {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75em;
+            color: var(--accent-red);
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 10px;
-            border-bottom: 1px dashed var(--faded-brown);
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin-bottom: 15px;
         }
 
-        /* The Play Button */
-        .play-btn {
-            background: var(--faded-brown);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            font-size: 0.8em;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .play-btn:hover {
-            background: var(--alert-red);
-        }
-
-        .excerpt-text {
+        .card-text {
             font-style: italic;
-            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            font-size: 0.95em;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
+        /* Custom Audio Controls */
+        .audio-controls {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .audio-controls:hover {
+            background: #e0e0e0;
+        }
+
+        .play-icon {
+            width: 30px;
+            height: 30px;
+            background: var(--dark-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .audio-label {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: var(--dark-green);
+            text-transform: uppercase;
+        }
+
+        /* Animations */
         .loading {
             text-align: center;
-            font-weight: bold;
-            color: var(--alert-red);
+            padding: 40px;
+            font-family: 'Courier New', monospace;
             display: none;
-            margin: 20px 0;
-            animation: blink 1s infinite;
         }
+        
+        .pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Archive: Cpt. James V. Morgia</h1>
-    
-    <div class="input-group">
-        <input type="text" id="question" placeholder="Enter inquiry..." onkeypress="handleEnter(event)"/>
-        <button onclick="askArchive()">Retrieve Record</button>
-    </div>
+    <header>
+        <h1>Captain Jim</h1>
+        <p>Official Service Archive • 84th Infantry Division</p>
+    </header>
 
-    <div id="loading" class="loading">>>> DECODING TRANSMISSION... <<<</div>
+    <main>
+        <div class="search-container">
+            <div class="input-wrapper">
+                <input type="text" id="question" placeholder="Ask the historian (e.g. 'Tell me about the Battle of Beho')" onkeypress="handleEnter(event)">
+                <button class="search-btn" onclick="askArchive()">Search</button>
+            </div>
+        </div>
 
-    <div id="results" style="display:none;">
+        <div id="loading" class="loading pulse">ACCESSING CLASSIFIED RECORDS...</div>
+
+        <div id="summary-container" class="summary-section">
+            <div class="section-label">Mission Briefing (Historian Summary)</div>
+            <div id="summary-text" class="summary-text"></div>
+        </div>
+
+        <div id="excerpts-container" class="excerpts-container">
+            <div class="section-label">Primary Source Recordings</div>
+            <div id="excerpts-grid" class="excerpts-grid"></div>
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        // This points to your live Render Backend
+        const API_URL = "https://captain-jim.onrender.com"; 
         
-        <h3>// MISSION BRIEFING //</h3>
-        <div id="summary" class="summary-box"></div>
-
-        <h3>// PRIMARY EVIDENCE (AUDIO AVAILABLE) //</h3>
-        <div id="excerpts-list" class="excerpt-list"></div>
-
-    </div>
-</div>
-
-<script>
-    function handleEnter(e) {
-        if (e.key === "Enter") askArchive();
-    }
-
-    async function askArchive() {
-        const question = document.getElementById('question').value;
-        const loader = document.getElementById('loading');
-        const results = document.getElementById('results');
-        
-        // --- NEW: Connection Check ---
-        try {
-            const healthCheck = await fetch('http://127.0.0.1:8000/');
-            if (!healthCheck.ok) throw new Error("Server is offline");
-        } catch (e) {
-            alert("CANNOT CONNECT TO SERVER. Is the terminal running?");
-            return;
+        function handleEnter(e) {
+            if (e.key === "Enter") askArchive();
         }
-        // -----------------------------
 
-        if (!question) return;
+        async function askArchive() {
+            const question = document.getElementById('question').value;
+            if (!question) return;
 
-        loader.style.display = 'block';
-        results.style.display = 'none';
+            // UI State: Loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('summary-container').style.display = 'none';
+            document.getElementById('excerpts-container').style.display = 'none';
 
-        try {
-            // Talk to Backend
-            console.log("Sending request to http://127.0.0.1:8000/ask...");
-            const response = await fetch('http://127.0.0.1:8000/ask', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({question: question})
-            });
-            
-            console.log("Response status:", response.status);
+            try {
+                const response = await fetch(`${API_URL}/ask`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question: question})
+                });
 
-            if (!response.ok) {
-                throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+                if (!response.ok) throw new Error("Server Error");
+                const data = await response.json();
+
+                // 1. Render Summary
+                document.getElementById('summary-text').innerText = data.summary;
+                document.getElementById('summary-container').style.display = 'block';
+
+                // 2. Render Audio Cards
+                const grid = document.getElementById('excerpts-grid');
+                grid.innerHTML = ''; // Clear old cards
+
+                data.excerpts.forEach(excerpt => {
+                    const card = document.createElement('div');
+                    card.className = 'audio-card';
+                    
+                    // Escape text for the onclick handler
+                    const cleanText = excerpt.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="card-header">SOURCE: ${excerpt.chapter}</div>
+                            <div class="card-text">"${excerpt.text}"</div>
+                        </div>
+                        <div class="audio-controls" onclick="playAudio(this, '${cleanText}')">
+                            <div class="play-icon">▶</div>
+                            <div class="audio-label">Play Voice Record</div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                document.getElementById('excerpts-container').style.display = 'block';
+
+            } catch (error) {
+                alert("Error connecting to archive. Please try again.");
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
             }
-
-            const data = await response.json();
-            console.log("Data received:", data);
-            
-            // 1. Render Summary
-            document.getElementById('summary').innerText = data.summary;
-
-            // 2. Render Excerpts
-            const list = document.getElementById('excerpts-list');
-            list.innerHTML = ''; 
-            
-            data.excerpts.forEach((excerpt) => {
-                const card = document.createElement('div');
-                card.className = 'excerpt-card';
-                const cleanText = excerpt.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
-                card.innerHTML = `
-                    <div class="excerpt-meta">
-                        <span>SOURCE: ${excerpt.chapter}</span>
-                        <button class="play-btn" onclick="playAudio('${cleanText}')">▶ PLAY RECORDING</button>
-                    </div>
-                    <div class="excerpt-text">"${excerpt.text}"</div>
-                `;
-                list.appendChild(card);
-            });
-
-            loader.style.display = 'none';
-            results.style.display = 'block';
-
-        } catch (error) {
-            console.error("FULL ERROR DETAILS:", error);
-            loader.innerText = "ERROR: CONNECTION FAILED. Check Console for details.";
         }
-    }
 
-    async function playAudio(textToSpeak) {
-        console.log("Requesting audio for:", textToSpeak.substring(0, 20) + "...");
-        const audio = new Audio();
-        try {
-            const response = await fetch('http://127.0.0.1:8000/speak', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: textToSpeak})
-            });
+        async function playAudio(element, text) {
+            const icon = element.querySelector('.play-icon');
+            const label = element.querySelector('.audio-label');
+            
+            // UI State: Playing
+            icon.innerText = "⏳";
+            label.innerText = "Buffering...";
 
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Audio Error: ${response.status} - ${errText}`);
+            try {
+                const response = await fetch(`${API_URL}/speak`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: text})
+                });
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                
+                audio.play();
+                
+                icon.innerText = "🔊";
+                label.innerText = "Playing...";
+
+                audio.onended = () => {
+                    icon.innerText = "▶";
+                    label.innerText = "Play Voice Record";
+                };
+
+            } catch (error) {
+                icon.innerText = "❌";
+                label.innerText = "Failed";
+                console.error(error);
             }
-
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            audio.src = url;
-            audio.play();
-            console.log("Audio playing...");
-        } catch (error) {
-            console.error("AUDIO FAILED:", error);
-            alert("Unable to generate audio transmission. Check server logs.");
         }
-    }
-</script>
-
+    </script>
 </body>
 </html>
