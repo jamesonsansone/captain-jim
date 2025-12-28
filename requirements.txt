@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-dotenv
+langchain==0.3.7
+langchain-community==0.3.7
+langchain-openai==0.2.0
+langchain-core
+chromadb
+requests
+pydantic
+numpy==1.26.4

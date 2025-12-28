@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captain Jim - Official Archive</title>
+    <style>
+        /* --- VISUAL THEME: WW2 FIELD OFFICE --- */
+        :root {
+            --army-green: #4b5320;
+            --paper-tan: #f4e4bc;
+            --ink-black: #1a1a1a;
+            --faded-brown: #8b7355;
+            --alert-red: #8b0000;
+        }
+
+        body {
+            background-color: var(--army-green);
+            font-family: 'Courier New', Courier, monospace; /* Typewriter Font */
+            color: var(--ink-black);
+            padding: 40px;
+            display: flex;
+            justify_content: center;
+        }
+
+        .container {
+            background-color: var(--paper-tan);
+            width: 100%;
+            max-width: 900px;
+            padding: 60px;
+            border: 12px solid var(--faded-brown);
+            box-shadow: 20px 20px 40px rgba(0,0,0,0.6);
+        }
+
+        h1 {
+            text-align: center;
+            text-transform: uppercase;
+            border-bottom: 4px double var(--ink-black);
+            padding-bottom: 10px;
+            letter-spacing: 2px;
+            margin-top: 0;
+        }
+
+        /* Input Section */
+        .input-group {
+            display: flex;
+            border: 3px solid var(--ink-black);
+            margin-bottom: 40px;
+        }
+
+        input {
+            flex-grow: 1;
+            padding: 15px;
+            font-family: inherit;
+            font-size: 18px;
+            background: #fffdf0;
+            border: none;
+            outline: none;
+        }
+
+        button {
+            background: var(--ink-black);
+            color: var(--paper-tan);
+            border: none;
+            padding: 0 30px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: var(--alert-red);
+        }
+
+        /* --- SUMMARY SECTION --- */
+        h3 {
+            background: var(--ink-black);
+            color: var(--paper-tan);
+            padding: 8px 15px;
+            display: inline-block;
+            text-transform: uppercase;
+            margin-top: 40px;
+            font-size: 1.1em;
+        }
+
+        .summary-box {
+            border-left: 6px solid var(--ink-black);
+            padding: 15px 25px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            background: rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        /* --- EXCERPT CARDS --- */
+        .excerpt-list {
+            display: grid;
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .excerpt-card {
+            background: #fff;
+            border: 2px solid var(--ink-black);
+            padding: 20px;
+            position: relative;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.15);
+            transition: transform 0.1s;
+        }
+
+        .excerpt-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--alert-red);
+        }
+
+        .excerpt-meta {
+            font-size: 0.8em;
+            color: var(--alert-red);
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed var(--faded-brown);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* The Play Button */
+        .play-btn {
+            background: var(--faded-brown);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 0.8em;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .play-btn:hover {
+            background: var(--alert-red);
+        }
+
+        .excerpt-text {
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            font-weight: bold;
+            color: var(--alert-red);
+            display: none;
+            margin: 20px 0;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Archive: Cpt. James V. Morgia</h1>
+    
+    <div class="input-group">
+        <input type="text" id="question" placeholder="Enter inquiry..." onkeypress="handleEnter(event)"/>
+        <button onclick="askArchive()">Retrieve Record</button>
+    </div>
+
+    <div id="loading" class="loading">>>> DECODING TRANSMISSION... <<<</div>
+
+    <div id="results" style="display:none;">
+        
+        <h3>// MISSION BRIEFING //</h3>
+        <div id="summary" class="summary-box"></div>
+
+        <h3>// PRIMARY EVIDENCE (AUDIO AVAILABLE) //</h3>
+        <div id="excerpts-list" class="excerpt-list"></div>
+
+    </div>
+</div>
+
+<script>
+    function handleEnter(e) {
+        if (e.key === "Enter") askArchive();
+    }
+
+    async function askArchive() {
+        const question = document.getElementById('question').value;
+        const loader = document.getElementById('loading');
+        const results = document.getElementById('results');
+        
+        // --- NEW: Connection Check ---
+        try {
+            const healthCheck = await fetch('http://127.0.0.1:8000/');
+            if (!healthCheck.ok) throw new Error("Server is offline");
+        } catch (e) {
+            alert("CANNOT CONNECT TO SERVER. Is the terminal running?");
+            return;
+        }
+        // -----------------------------
+
+        if (!question) return;
+
+        loader.style.display = 'block';
+        results.style.display = 'none';
+
+        try {
+            // Talk to Backend
+            console.log("Sending request to http://127.0.0.1:8000/ask...");
+            const response = await fetch('http://127.0.0.1:8000/ask', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({question: question})
+            });
+            
+            console.log("Response status:", response.status);
+
+            if (!response.ok) {
+                throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("Data received:", data);
+            
+            // 1. Render Summary
+            document.getElementById('summary').innerText = data.summary;
+
+            // 2. Render Excerpts
+            const list = document.getElementById('excerpts-list');
+            list.innerHTML = ''; 
+            
+            data.excerpts.forEach((excerpt) => {
+                const card = document.createElement('div');
+                card.className = 'excerpt-card';
+                const cleanText = excerpt.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                card.innerHTML = `
+                    <div class="excerpt-meta">
+                        <span>SOURCE: ${excerpt.chapter}</span>
+                        <button class="play-btn" onclick="playAudio('${cleanText}')">▶ PLAY RECORDING</button>
+                    </div>
+                    <div class="excerpt-text">"${excerpt.text}"</div>
+                `;
+                list.appendChild(card);
+            });
+
+            loader.style.display = 'none';
+            results.style.display = 'block';
+
+        } catch (error) {
+            console.error("FULL ERROR DETAILS:", error);
+            loader.innerText = "ERROR: CONNECTION FAILED. Check Console for details.";
+        }
+    }
+
+    async function playAudio(textToSpeak) {
+        console.log("Requesting audio for:", textToSpeak.substring(0, 20) + "...");
+        const audio = new Audio();
+        try {
+            const response = await fetch('http://127.0.0.1:8000/speak', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: textToSpeak})
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Audio Error: ${response.status} - ${errText}`);
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            audio.src = url;
+            audio.play();
+            console.log("Audio playing...");
+        } catch (error) {
+            console.error("AUDIO FAILED:", error);
+            alert("Unable to generate audio transmission. Check server logs.");
+        }
+    }
+</script>
+
+</body>
+</html>
