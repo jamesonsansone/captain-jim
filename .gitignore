@@ -11,6 +11,7 @@ __pycache__/
 # --- Node/Next.js Junk ---
 node_modules/
 .next/
+*.d.ts
 
 # --- Legacy/Test Scripts ---
 scripts/query.py
