@@ -50,23 +50,4 @@ def main():
     initial_count = len(nodes)
     # Filter: Remove nodes that are too short (noise, page numbers, weird formatting)
     nodes = [node for node in nodes if len(node.get_content()) >= MIN_CHAR_LENGTH]
-    removed_count = initial_count - len(nodes)
-    
-    print(f"   Created {len(nodes)} chunks (Removed {removed_count} small/noisy chunks).")
-
-    # 5. Build Index (The Heavy Lifting)
-    # This will automatically use FastEmbed in batches
-    print("🔹 Building Vector Index (this runs the embeddings)...")
-    # show_progress=True adds a loading bar so you know it's not frozen
-    index = VectorStoreIndex(nodes, show_progress=True)
-    # 6. Save to Disk
-    print(f"🔹 Persisting index to {STORAGE_DIR}...")
-    # Clean old storage if it exists to avoid conflicts
-    if os.path.exists(STORAGE_DIR):
-        shutil.rmtree(STORAGE_DIR)
-        
-    index.storage_context.persist(persist_dir=STORAGE_DIR)
-    print("✅ Ingestion complete!")
-
-if __name__ == "__main__":
-    main()
+    removed_count = initial_count - len(n

@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from openai import OpenAI
 from fastapi.responses import Response
@@ -26,10 +26,19 @@ async def lifespan(app: FastAPI):
         if not os.getenv("OPENAI_API_KEY"):
             logger.error("❌ ERROR: OPENAI_API_KEY is missing.")
         
+        # Initialize Embeddings
         embedding_function = OpenAIEmbeddings()
+        
+        # Path to the chroma_db folder (ensure this path is correct relative to server.py)
         db_path = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
+        
+        if not os.path.exists(db_path):
+             logger.warning(f"⚠️ WARNING: Database path {db_path} not found. Ingestion might be needed.")
+
         db = Chroma(persist_directory=db_path, embedding_function=embedding_function)
         retriever = db.as_retriever(search_kwargs={"k": 4})
+        
+        # Initialize OpenAI Client
         openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
         ai_resources["retriever"] = retriever
@@ -77,7 +86,7 @@ async def ask_captain(request: QueryRequest):
         docs = ai_resources["retriever"].invoke(request.question)
         context_text = "\n\n".join([f"Excerpt: {d.page_content}" for d in docs])
 
-        # 2. Historian Prompt (UPDATED)
+        # 2. Historian Prompt
         system_instruction = (
             "You are an expert World War II historian. You are receiving a question from a user who believes they are speaking directly to the spirit or legacy of Captain James V. Morgia. "
             "Your task is to answer their question using the specific details from his memoir, 'Three Day Pass'.\n\n"
@@ -123,7 +132,13 @@ async def generate_audio(request: SpeakRequest):
     
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
+    
     data = {
         "text": request.text,
         "model_id": "eleven_monolingual_v1",
         "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}
+    }
+    # ---------------------------------------------
+    
+    response = requests.post(url, json=data, headers=headers)
+    return Response(content=response.content, media_type="audio/mpeg")

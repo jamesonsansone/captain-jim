@@ -350,4 +350,52 @@
                 });
 
                 if (validExcerpts > 0) {
-                    document.
+                    document.getElementById('excerpts-container').style.display = 'block';
+                }
+
+            } catch (error) {
+                alert("Error connecting to archive. Please try again.");
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                inputField.classList.remove('searching');
+            }
+        }
+
+        async function playAudio(element, text) {
+            const icon = element.querySelector('.play-icon');
+            const label = element.querySelector('.audio-label');
+            
+            icon.innerText = "⏳";
+            label.innerText = "Loading...";
+
+            try {
+                const response = await fetch(`${API_URL}/speak`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: text})
+                });
+
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                
+                audio.play();
+                
+                icon.innerText = "🔊";
+                label.innerText = "Playing...";
+
+                audio.onended = () => {
+                    icon.innerText = "▶";
+                    label.innerText = "Listen to Jim Reading";
+                };
+
+            } catch (error) {
+                icon.innerText = "❌";
+                label.innerText = "Failed";
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
