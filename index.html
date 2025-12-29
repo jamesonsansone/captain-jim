@@ -374,36 +374,75 @@
             }
         }
 
-        async function playAudio(element, text) {
-            const icon = element.querySelector('.play-icon');
-            const label = element.querySelector('.audio-label');
-            
-            icon.innerText = "⏳";
-            label.innerText = "Loading...";
+    // Global variable to track the currently playing audio
+    let currentAudio = null;
+    let currentButton = null;
 
-            try {
-                const response = await fetch(`${API_URL}/speak`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text: text})
-                });
+    async function playAudio(element, text) {
+        const icon = element.querySelector('.play-icon');
+        const label = element.querySelector('.audio-label');
 
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const audio = new Audio(url);
-                
-                audio.play();
-                
-                icon.innerText = "🔊";
-                label.innerText = "Playing...";
-                audio.onended = () => { icon.innerText = "▶"; label.innerText = "Listen to Jim Reading"; };
+        // CASE 1: User clicks the button that is ALREADY playing (Pause/Stop)
+        if (currentAudio && currentButton === element && !currentAudio.paused) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0; // Reset to start
+            icon.innerText = "▶";
+            label.innerText = "Listen to Jim Reading";
+            currentAudio = null;
+            currentButton = null;
+            return;
+        }
 
-            } catch (error) {
-                icon.innerText = "❌";
-                label.innerText = "Failed";
-                console.error(error);
+        // CASE 2: User clicks a NEW button (Stop previous, start new)
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+            // Reset the OLD button's UI
+            if (currentButton) {
+                const oldIcon = currentButton.querySelector('.play-icon');
+                const oldLabel = currentButton.querySelector('.audio-label');
+                oldIcon.innerText = "▶";
+                oldLabel.innerText = "Listen to Jim Reading";
             }
         }
+
+        // Start Loading UI for NEW button
+        icon.innerText = "⏳";
+        label.innerText = "Loading...";
+        currentButton = element;
+
+        try {
+            const response = await fetch(`${API_URL}/speak`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            });
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            currentAudio = new Audio(url);
+            
+            currentAudio.play();
+            
+            icon.innerText = "⏸"; // Change to Pause icon while playing
+            label.innerText = "Stop / Pause";
+
+            // When audio naturally finishes
+            currentAudio.onended = () => {
+                icon.innerText = "▶";
+                label.innerText = "Listen to Jim Reading";
+                currentAudio = null;
+                currentButton = null;
+            };
+
+        } catch (error) {
+            icon.innerText = "❌";
+            label.innerText = "Failed";
+            console.error(error);
+            currentAudio = null;
+            currentButton = null;
+        }
+    }
     </script>
 </body>
 </html>

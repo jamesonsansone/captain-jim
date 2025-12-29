@@ -101,21 +101,30 @@ async def ask_captain(request: QueryRequest):
         raise HTTPException(status_code=503, detail="AI System is not ready yet.")
 
     try:
-        # 1. Retrieve (Now getting 5 diverse results)
+        # 1. Retrieve
         docs = ai_resources["retriever"].invoke(request.question)
         
-        # Prepare context for GPT
-        context_text = "\n\n".join([f"Excerpt: {d.page_content}" for d in docs])
+        # 2. FILTERING: Remove "Header Only" or "Empty" chunks
+        valid_docs = []
+        for d in docs:
+            content = d.page_content.strip()
+            # If the chunk is just a Chapter header or very short, SKIP IT.
+            if len(content) < 100: 
+                continue
+            valid_docs.append(d)
 
-        # 2. Historian Prompt
+        # If we filtered everything out, return a polite "No info found"
+        if not valid_docs:
+            return {
+                "summary": "I could not find specific details in the memoir regarding that query.",
+                "excerpts": []
+            }
+
+        context_text = "\n\n".join([f"Excerpt: {d.page_content}" for d in valid_docs])
+
+        # 3. Historian Prompt (Same as before)
         system_instruction = (
-            "You are an expert World War II historian. You are receiving a question from a user who believes they are speaking directly to the spirit or legacy of Captain James V. Morgia. "
-            "Your task is to answer their question using the specific details from his memoir, 'Three Day Pass'.\n\n"
-            "Style Guide:\n"
-            "1. **Referencing Jim:** In the first sentence, refer to him as 'Captain James V. Morgia'. In all subsequent sentences, refer to him warmly as 'Captain Jim'.\n"
-            "2. **Tone:** Authoritative, respectful, and narrative. Use the provided context to tell a story.\n"
-            "3. **Perspective:** Write in the third person (he/him/Jim), but answer the user's question directly.\n"
-            "4. **Accuracy:** Stick strictly to the facts provided in the context."
+            "You are an expert World War II historian... [KEEP EXISTING PROMPT]"
         )
 
         completion = ai_resources["openai"].chat.completions.create(
@@ -129,9 +138,45 @@ async def ask_captain(request: QueryRequest):
         
         summary = completion.choices[0].message.content
 
-        # 3. Format Excerpts
+        # 4. Format Excerpts
         excerpts_payload = []
-        for doc in docs: 
-            # Clean the text (remove partial sentences at end)
+        for doc in valid_docs:  # Use the VALID list
             cleaned_text = clean_excerpt_text(doc.page_content)
-            
+            excerpts_payload.append({
+                "text": cleaned_text,
+                "chapter": doc.metadata.get("source", "Memoir Excerpt")
+            })
+
+        return {"summary": summary, "excerpts": excerpts_payload}
+
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/speak")
+async def generate_audio(request: SpeakRequest):
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID")
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    
+    if not voice_id or not api_key:
+        raise HTTPException(status_code=500, detail="Audio configuration missing.")
+    
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
+    
+    # --- UPDATED VOICE SETTINGS BASED ON YOUR SCREENSHOT ---
+# Inside @app.post("/speak")
+    data = {
+        "text": request.text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.30,
+            "similarity_boost": 0.95,
+            "style": 0.20,
+            "use_speaker_boost": True,
+            "speed": 0.8  
+        }
+    }
+    
+    response = requests.post(url, json=data, headers=headers)
+    return Response(content=response.content, media_type="audio/mpeg")
