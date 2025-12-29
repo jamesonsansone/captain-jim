@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
-        /* --- VISUAL THEME: 1940s Field Report --- */
         :root {
             --army-green: #4b5320;
             --paper-tan: #fdf6e3;
@@ -86,7 +85,7 @@
 
         /* SEARCH BAR */
         .search-container {
-            margin-bottom: 60px;
+            margin-bottom: 30px;
             text-align: center;
         }
 
@@ -111,13 +110,8 @@
             transition: opacity 0.3s;
         }
 
-        /* NEW: Searching State */
-        input.searching {
-            opacity: 0.5;
-            pointer-events: none;
-        }
+        input.searching { opacity: 0.5; pointer-events: none; }
 
-        /* NEW: Clear Button */
         .clear-btn {
             background: transparent;
             border: none;
@@ -125,7 +119,7 @@
             color: #999;
             cursor: pointer;
             padding: 0 10px;
-            display: none; /* Hidden by default */
+            display: none;
         }
         .clear-btn:hover { color: var(--alert-red); }
 
@@ -142,14 +136,41 @@
             transition: background 0.2s;
         }
 
-        button.search-btn:hover {
-            background: var(--alert-red);
+        button.search-btn:hover { background: var(--alert-red); }
+
+        /* SUGGESTIONS SECTION */
+        .suggestions {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .suggestion-label {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            color: var(--faded-brown);
+            margin-bottom: 10px;
+        }
+        .suggestion-chips {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .chip {
+            background: #e8e0d2;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .chip:hover {
+            background: var(--ink-black);
+            color: var(--paper-tan);
+            border-color: var(--ink-black);
         }
 
-        .summary-section {
-            margin-bottom: 60px;
-            display: none;
-        }
+        .summary-section { margin-bottom: 60px; display: none; }
 
         .section-label {
             font-size: 0.9em;
@@ -170,15 +191,8 @@
             text-align: justify;
         }
 
-        .excerpts-container {
-            display: none;
-        }
-
-        .excerpt-list {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
+        .excerpts-container { display: none; }
+        .excerpt-list { display: flex; flex-direction: column; gap: 40px; }
 
         .audio-card {
             background: #fff;
@@ -221,11 +235,7 @@
         }
 
         .play-icon { font-size: 1.2em; }
-        .audio-label {
-            font-size: 0.8em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+        .audio-label { font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
 
         .loading {
             text-align: center;
@@ -251,9 +261,23 @@
 
         <div class="search-container">
             <div class="input-wrapper">
-                <input type="text" id="question" placeholder="Ask a question..." oninput="toggleClear()" onkeypress="handleEnter(event)">
+                <input type="text" id="question" 
+                       placeholder="Ask about Captain Jim's experience from his book 'Three Day Pass'..." 
+                       oninput="toggleClear()" 
+                       onkeypress="handleEnter(event)">
                 <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
                 <button class="search-btn" onclick="askArchive()">Search</button>
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <div class="suggestion-label">Suggested Questions</div>
+            <div class="suggestion-chips">
+                <div class="chip" onclick="fillQuestion('What was your experience in the Battle of the Bulge?')">Battle of the Bulge</div>
+                <div class="chip" onclick="fillQuestion('What happened in the town of Beho?')">Battle of Beho</div>
+                <div class="chip" onclick="fillQuestion('Did you ever meet General Eisenhower?')">General Eisenhower</div>
+                <div class="chip" onclick="fillQuestion('Tell me about your time in Paris.')">Time in Paris</div>
+                <div class="chip" onclick="fillQuestion('What is the Three Day Pass?')">Three Day Pass</div>
             </div>
         </div>
 
@@ -265,29 +289,29 @@
         </div>
 
         <div id="excerpts-container" class="excerpts-container">
-            <div class="section-label">Transcripts from the Memoir</div>
+            <div class="section-label">Transcripts from 'The Three Day Pass'</div>
             <div id="excerpts-list" class="excerpt-list"></div>
         </div>
     </main>
 
     <script>
-        // Use your live URL for Vercel
         const API_URL = "https://captain-jim.onrender.com"; 
-        
-        function handleEnter(e) {
-            if (e.key === "Enter") askArchive();
-        }
 
+        function handleEnter(e) { if (e.key === "Enter") askArchive(); }
         function toggleClear() {
             const val = document.getElementById('question').value;
-            const btn = document.getElementById('clearBtn');
-            btn.style.display = val.length > 0 ? 'block' : 'none';
+            document.getElementById('clearBtn').style.display = val.length > 0 ? 'block' : 'none';
         }
-
         function clearSearch() {
             document.getElementById('question').value = '';
             toggleClear();
             document.getElementById('question').focus();
+        }
+        
+        function fillQuestion(text) {
+            document.getElementById('question').value = text;
+            toggleClear();
+            askArchive();
         }
 
         async function askArchive() {
@@ -296,7 +320,6 @@
             
             if (!question) return;
 
-            // UI Feedback
             inputField.classList.add('searching');
             document.getElementById('loading').style.display = 'block';
             document.getElementById('summary-container').style.display = 'none';
@@ -312,27 +335,16 @@
                 if (!response.ok) throw new Error("Server Error");
                 const data = await response.json();
 
-                // 1. Render Summary
                 document.getElementById('summary-text').innerText = data.summary;
                 document.getElementById('summary-container').style.display = 'block';
 
-                // 2. Render Cards
                 const list = document.getElementById('excerpts-list');
                 list.innerHTML = ''; 
 
-                let validExcerpts = 0;
-
                 data.excerpts.forEach(excerpt => {
-                    // Filter: Skip if text is strangely short or empty
-                    if (!excerpt.text || excerpt.text.length < 20) return;
-
-                    validExcerpts++;
                     const card = document.createElement('div');
                     card.className = 'audio-card';
                     
-                    // Formatting the Chapter Title
-                    // If it was "Chapter 7: Pass to Paris", it displays as is.
-                    // If the old ingestion left a path, we hide it or default to "Memoir Excerpt"
                     let sourceTitle = excerpt.chapter;
                     if (sourceTitle.includes("/")) sourceTitle = "Memoir Excerpt"; 
 
@@ -349,7 +361,7 @@
                     list.appendChild(card);
                 });
 
-                if (validExcerpts > 0) {
+                if (data.excerpts.length > 0) {
                     document.getElementById('excerpts-container').style.display = 'block';
                 }
 
@@ -384,11 +396,7 @@
                 
                 icon.innerText = "🔊";
                 label.innerText = "Playing...";
-
-                audio.onended = () => {
-                    icon.innerText = "▶";
-                    label.innerText = "Listen to Jim Reading";
-                };
+                audio.onended = () => { icon.innerText = "▶"; label.innerText = "Listen to Jim Reading"; };
 
             } catch (error) {
                 icon.innerText = "❌";

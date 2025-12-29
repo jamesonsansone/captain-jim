@@ -26,19 +26,22 @@ async def lifespan(app: FastAPI):
         if not os.getenv("OPENAI_API_KEY"):
             logger.error("❌ ERROR: OPENAI_API_KEY is missing.")
         
-        # Initialize Embeddings
         embedding_function = OpenAIEmbeddings()
         
-        # Path to the chroma_db folder (ensure this path is correct relative to server.py)
+        # Ensure this points to where you saved your DB
         db_path = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
         
-        if not os.path.exists(db_path):
-             logger.warning(f"⚠️ WARNING: Database path {db_path} not found. Ingestion might be needed.")
-
         db = Chroma(persist_directory=db_path, embedding_function=embedding_function)
-        retriever = db.as_retriever(search_kwargs={"k": 4})
         
-        # Initialize OpenAI Client
+        # --- UPDATED RETRIEVER SETTINGS ---
+        # 1. search_type="mmr": Ensures diversity. It picks the best match, 
+        #    then penalizes the next match if it's too similar to the first.
+        # 2. k=5: We fetch 5 results now for more detail.
+        retriever = db.as_retriever(
+            search_type="mmr", 
+            search_kwargs={"k": 5, "fetch_k": 20}
+        )
+        
         openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
         ai_resources["retriever"] = retriever
@@ -51,11 +54,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# --- SECURITY: CORS CONFIGURATION ---
+# --- CORS ---
 origins = [
-    "https://captain-jim.vercel.app",  # Your specific Vercel App
-    "http://localhost:5500",           # For local testing
-    "http://127.0.0.1:5500"            # For local testing
+    "https://captain-jim.vercel.app",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500"
 ]
 
 app.add_middleware(
@@ -72,6 +75,22 @@ class QueryRequest(BaseModel):
 class SpeakRequest(BaseModel):
     text: str
 
+def clean_excerpt_text(text):
+    """
+    Trims text to the last complete sentence to avoid trailing fragments.
+    """
+    # Find the last occurrence of major punctuation
+    last_dot = text.rfind('.')
+    last_excl = text.rfind('!')
+    last_ques = text.rfind('?')
+    
+    cutoff = max(last_dot, last_excl, last_ques)
+    
+    # If punctuation found, trim to it. Otherwise, return as is.
+    if cutoff != -1:
+        return text[:cutoff+1]
+    return text
+
 @app.get("/")
 async def health_check():
     return {"status": "online", "message": "Captain Jim Archive is Active"}
@@ -82,8 +101,10 @@ async def ask_captain(request: QueryRequest):
         raise HTTPException(status_code=503, detail="AI System is not ready yet.")
 
     try:
-        # 1. Retrieve
+        # 1. Retrieve (Now getting 5 diverse results)
         docs = ai_resources["retriever"].invoke(request.question)
+        
+        # Prepare context for GPT
         context_text = "\n\n".join([f"Excerpt: {d.page_content}" for d in docs])
 
         # 2. Historian Prompt
@@ -110,35 +131,7 @@ async def ask_captain(request: QueryRequest):
 
         # 3. Format Excerpts
         excerpts_payload = []
-        for doc in docs[:3]: 
-            excerpts_payload.append({
-                "text": doc.page_content,
-                "chapter": doc.metadata.get("source", "Unknown Chapter")
-            })
-
-        return {"summary": summary, "excerpts": excerpts_payload}
-
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/speak")
-async def generate_audio(request: SpeakRequest):
-    voice_id = os.getenv("ELEVENLABS_VOICE_ID")
-    api_key = os.getenv("ELEVENLABS_API_KEY")
-    
-    if not voice_id or not api_key:
-        raise HTTPException(status_code=500, detail="Audio configuration missing.")
-    
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
-    
-    data = {
-        "text": request.text,
-        "model_id": "eleven_monolingual_v1",
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}
-    }
-    # ---------------------------------------------
-    
-    response = requests.post(url, json=data, headers=headers)
-    return Response(content=response.content, media_type="audio/mpeg")
+        for doc in docs: 
+            # Clean the text (remove partial sentences at end)
+            cleaned_text = clean_excerpt_text(doc.page_content)
+            
