@@ -12,8 +12,8 @@
         /* --- VISUAL THEME: 1940s Field Report --- */
         :root {
             --army-green: #4b5320;
-            --paper-tan: #fdf6e3; /* Slightly lighter for readability */
-            --ink-black: #2b2b2b; /* Softer black like typewriter ribbon */
+            --paper-tan: #fdf6e3;
+            --ink-black: #2b2b2b;
             --faded-brown: #8b7355;
             --alert-red: #8b0000;
         }
@@ -27,7 +27,6 @@
             line-height: 1.6;
         }
 
-        /* HERO SECTION */
         header {
             background-color: var(--army-green);
             color: var(--paper-tan);
@@ -51,7 +50,6 @@
             font-style: italic;
         }
 
-        /* MAIN LAYOUT */
         main {
             max-width: 900px;
             margin: 0 auto;
@@ -61,7 +59,6 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
 
-        /* IMAGE PLACEHOLDER SECTION */
         .photo-gallery {
             display: flex;
             justify-content: center;
@@ -80,7 +77,7 @@
             justify-content: center;
             color: #888;
             font-size: 0.8em;
-            transform: rotate(-2deg); /* Jaunty angle */
+            transform: rotate(-2deg);
         }
         
         .photo-placeholder:nth-child(2) {
@@ -99,6 +96,7 @@
             margin: 0 auto;
             border: 2px solid var(--ink-black);
             background: #fff;
+            position: relative;
         }
 
         input {
@@ -110,7 +108,26 @@
             outline: none;
             font-family: inherit;
             color: var(--ink-black);
+            transition: opacity 0.3s;
         }
+
+        /* NEW: Searching State */
+        input.searching {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* NEW: Clear Button */
+        .clear-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.2em;
+            color: #999;
+            cursor: pointer;
+            padding: 0 10px;
+            display: none; /* Hidden by default */
+        }
+        .clear-btn:hover { color: var(--alert-red); }
 
         button.search-btn {
             background: var(--ink-black);
@@ -129,7 +146,6 @@
             background: var(--alert-red);
         }
 
-        /* AI SUMMARY SECTION */
         .summary-section {
             margin-bottom: 60px;
             display: none;
@@ -148,14 +164,12 @@
 
         .summary-text {
             font-size: 1.1em;
-            /* Optimal reading width constraints */
             max-width: 65ch; 
             margin: 0 auto;
             white-space: pre-wrap;
             text-align: justify;
         }
 
-        /* EXCERPTS LIST (Single Column for Focus) */
         .excerpts-container {
             display: none;
         }
@@ -166,7 +180,6 @@
             gap: 40px;
         }
 
-        /* DOCUMENT STYLE CARD */
         .audio-card {
             background: #fff;
             border-left: 6px solid var(--ink-black);
@@ -188,11 +201,9 @@
             font-size: 1em;
             line-height: 1.8;
             margin-bottom: 20px;
-            /* Indent like a quote */
             padding-left: 10px;
         }
 
-        /* Custom Audio Controls */
         .audio-controls {
             display: inline-flex;
             align-items: center;
@@ -209,17 +220,13 @@
             color: var(--paper-tan);
         }
 
-        .play-icon {
-            font-size: 1.2em;
-        }
-
+        .play-icon { font-size: 1.2em; }
         .audio-label {
             font-size: 0.8em;
             font-weight: bold;
             text-transform: uppercase;
         }
 
-        /* Loading */
         .loading {
             text-align: center;
             padding: 40px;
@@ -238,13 +245,14 @@
 
     <main>
         <div class="photo-gallery">
-            <div class="photo-placeholder">PHOTO 1<br>(Captain Jim in Uniform)</div>
-            <div class="photo-placeholder">PHOTO 2<br>(84th Division Patch)</div>
+            <div class="photo-placeholder">PHOTO 1<br>(Captain Jim)</div>
+            <div class="photo-placeholder">PHOTO 2<br>(84th Division)</div>
         </div>
 
         <div class="search-container">
             <div class="input-wrapper">
-                <input type="text" id="question" placeholder="Ask a question..." onkeypress="handleEnter(event)">
+                <input type="text" id="question" placeholder="Ask a question..." oninput="toggleClear()" onkeypress="handleEnter(event)">
+                <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
                 <button class="search-btn" onclick="askArchive()">Search</button>
             </div>
         </div>
@@ -263,17 +271,33 @@
     </main>
 
     <script>
-        // CONFIGURATION
+        // Use your live URL for Vercel
         const API_URL = "https://captain-jim.onrender.com"; 
         
         function handleEnter(e) {
             if (e.key === "Enter") askArchive();
         }
 
+        function toggleClear() {
+            const val = document.getElementById('question').value;
+            const btn = document.getElementById('clearBtn');
+            btn.style.display = val.length > 0 ? 'block' : 'none';
+        }
+
+        function clearSearch() {
+            document.getElementById('question').value = '';
+            toggleClear();
+            document.getElementById('question').focus();
+        }
+
         async function askArchive() {
-            const question = document.getElementById('question').value;
+            const inputField = document.getElementById('question');
+            const question = inputField.value;
+            
             if (!question) return;
 
+            // UI Feedback
+            inputField.classList.add('searching');
             document.getElementById('loading').style.display = 'block';
             document.getElementById('summary-container').style.display = 'none';
             document.getElementById('excerpts-container').style.display = 'none';
@@ -292,22 +316,30 @@
                 document.getElementById('summary-text').innerText = data.summary;
                 document.getElementById('summary-container').style.display = 'block';
 
-                // 2. Render Audio Cards
+                // 2. Render Cards
                 const list = document.getElementById('excerpts-list');
                 list.innerHTML = ''; 
 
+                let validExcerpts = 0;
+
                 data.excerpts.forEach(excerpt => {
+                    // Filter: Skip if text is strangely short or empty
+                    if (!excerpt.text || excerpt.text.length < 20) return;
+
+                    validExcerpts++;
                     const card = document.createElement('div');
                     card.className = 'audio-card';
                     
-                    // Format Source Name (e.g., "CHAPTER 3 THE BATTLE OF BEHO")
-                    // We remove the "CHAPTER" prefix for cleaner reading if it exists in metadata
-                    let prettyChapter = excerpt.chapter;
-                    
+                    // Formatting the Chapter Title
+                    // If it was "Chapter 7: Pass to Paris", it displays as is.
+                    // If the old ingestion left a path, we hide it or default to "Memoir Excerpt"
+                    let sourceTitle = excerpt.chapter;
+                    if (sourceTitle.includes("/")) sourceTitle = "Memoir Excerpt"; 
+
                     const cleanText = excerpt.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                     card.innerHTML = `
-                        <div class="card-header">${prettyChapter}</div>
+                        <div class="card-header">${sourceTitle}</div>
                         <div class="card-text">"${excerpt.text}"</div>
                         <div class="audio-controls" onclick="playAudio(this, '${cleanText}')">
                             <span class="play-icon">▶</span>
@@ -317,50 +349,5 @@
                     list.appendChild(card);
                 });
 
-                document.getElementById('excerpts-container').style.display = 'block';
-
-            } catch (error) {
-                alert("Error connecting to archive. Please try again.");
-                console.error(error);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
-
-        async function playAudio(element, text) {
-            const icon = element.querySelector('.play-icon');
-            const label = element.querySelector('.audio-label');
-            
-            icon.innerText = "⏳";
-            label.innerText = "Loading...";
-
-            try {
-                const response = await fetch(`${API_URL}/speak`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text: text})
-                });
-
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const audio = new Audio(url);
-                
-                audio.play();
-                
-                icon.innerText = "🔊";
-                label.innerText = "Playing...";
-
-                audio.onended = () => {
-                    icon.innerText = "▶";
-                    label.innerText = "Listen to Jim Reading";
-                };
-
-            } catch (error) {
-                icon.innerText = "❌";
-                label.innerText = "Failed";
-                console.error(error);
-            }
-        }
-    </script>
-</body>
-</html>
+                if (validExcerpts > 0) {
+                    document.

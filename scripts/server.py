@@ -127,7 +127,3 @@ async def generate_audio(request: SpeakRequest):
         "text": request.text,
         "model_id": "eleven_monolingual_v1",
         "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}
-    }
-    
-    response = requests.post(url, json=data, headers=headers)
-    return Response(content=response.content, media_type="audio/mpeg")
