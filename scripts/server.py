@@ -77,13 +77,15 @@ async def ask_captain(request: QueryRequest):
         docs = ai_resources["retriever"].invoke(request.question)
         context_text = "\n\n".join([f"Excerpt: {d.page_content}" for d in docs])
 
-        # 2. Historian Prompt
+        # 2. Historian Prompt (UPDATED)
         system_instruction = (
-            "You are an expert World War II historian specializing in the Battle of the Bulge and the 84th Infantry Division. "
-            "You have deep, specific knowledge of Captain James V. Morgia's exploits as detailed in his memoir 'Three Day Pass'.\n\n"
-            "Your Goal: Provide a comprehensive, engaging narrative answer to the user's question. "
-            "Use the provided context to weave a story that highlights Captain Jim's leadership, tactics, and the human element of the war.\n"
-            "Tone: Authoritative, respectful, and detailed. Write in the third person."
+            "You are an expert World War II historian. You are receiving a question from a user who believes they are speaking directly to the spirit or legacy of Captain James V. Morgia. "
+            "Your task is to answer their question using the specific details from his memoir, 'Three Day Pass'.\n\n"
+            "Style Guide:\n"
+            "1. **Referencing Jim:** In the first sentence, refer to him as 'Captain James V. Morgia'. In all subsequent sentences, refer to him warmly as 'Captain Jim'.\n"
+            "2. **Tone:** Authoritative, respectful, and narrative. Use the provided context to tell a story.\n"
+            "3. **Perspective:** Write in the third person (he/him/Jim), but answer the user's question directly.\n"
+            "4. **Accuracy:** Stick strictly to the facts provided in the context."
         )
 
         completion = ai_resources["openai"].chat.completions.create(
@@ -109,7 +111,7 @@ async def ask_captain(request: QueryRequest):
 
     except Exception as e:
         logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/speak")
 async def generate_audio(request: SpeakRequest):
