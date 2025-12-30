@@ -24,7 +24,6 @@ ai_resources = {}
 
 # --- Configuration ---
 # Robust way to find the "storage" folder relative to this script
-# This ensures it works whether you run it from root or inside the scripts folder
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STORAGE_DIR = os.path.join(BASE_DIR, "storage")
 
@@ -66,11 +65,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # --- CORS ---
-# This allows your Vercel frontend to talk to this Render backend
-# --- CORS ---
 origins = [
-    "https://captain-jim.vercel.app",   # No slash
-    "https://captain-jim.vercel.app/",  # WITH slash (Crucial for Vercel)
+    "https://captain-jim.vercel.app",   
+    "https://captain-jim.vercel.app/",  
     "http://127.0.0.1:5500",
     "http://localhost:5500",
     "http://localhost:3000"
@@ -171,17 +168,30 @@ async def generate_audio(request: SpeakRequest):
     if not voice_id or not api_key:
         raise HTTPException(status_code=500, detail="Audio configuration missing.")
     
+    # --- PRONUNCIATION FIXES ---
+    # We swap the text for phonetic versions just before sending to AI
+    text_to_speak = request.text
+    
+    phonetic_corrections = {
+        "Beho": "Bay-ho",
+        "beho": "bay-ho"
+    }
+    
+    for word, phonetic in phonetic_corrections.items():
+        text_to_speak = text_to_speak.replace(word, phonetic)
+    # ---------------------------
+
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
     
     data = {
-        "text": request.text,
+        "text": text_to_speak, # Sending the phonetic version
         "model_id": "eleven_multilingual_v2",
         "voice_settings": {
             "stability": 0.35,
-            "similarity_boost": 0.92,
+            "similarity_boost": 0.95,
             "style": 0.20,
-            "speed": 0.8,
+            "speed": 0.77,
             "use_speaker_boost": True
         }
     }

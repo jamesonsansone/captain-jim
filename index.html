@@ -10,6 +10,17 @@
         body { font-family: 'Courier Prime', monospace; }
         .rotate-neg-2 { transform: rotate(-2deg); }
         .rotate-pos-3 { transform: rotate(3deg); }
+        
+        /* Custom Audio Button Pulse Animation */
+        @keyframes sound-wave {
+            0% { box-shadow: 0 0 0 0px rgba(75, 83, 32, 0.7); }
+            100% { box-shadow: 0 0 0 10px rgba(75, 83, 32, 0); }
+        }
+        .playing-audio {
+            animation: sound-wave 1.5s infinite;
+            background-color: #3a4119 !important;
+            border-color: #3a4119 !important;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[#FDF6E3] text-gray-800 flex flex-col">
@@ -17,18 +28,17 @@
     <header class="bg-[#4b5320] text-white p-6 border-b-4 border-[#2c3112] shadow-lg">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <div class="w-16 h-16 rounded-full bg-red-600 border-2 border-dashed border-white flex items-center justify-center shadow-lg hidden md:flex overflow-hidden">
-                <img src="/assets/84th_infantry_railsplitters.png" alt="84th Infantry" class="w-full h-full object-contain">
+                <img src="assets/84th_infantry_railsplitters.png" alt="84th Infantry" class="w-full h-full object-contain">
             </div>
 
             <div class="flex-1 text-center space-y-1">
-                <p class="text-xs md:text-sm uppercase tracking-[0.2em] text-gray-300">In His Own Words</p>
+                <p class="text-xs md:text-sm uppercase tracking-[0.2em] text-gray-300">In His Own Words • Chronicles from World War II • Silver Star Recipient</p>
                 <h1 class="text-2xl md:text-4xl font-bold tracking-wider text-[#FDF6E3] py-1">CAPTAIN JAMES VINCENT MORGIA</h1>
-                <p class="text-sm md:text-base font-light">Author of <span class="italic">Three Day Pass: Beho, Breakthrough, Battles Beyond</span></p>
-                <p class="text-sm md:text-base font-light">Silver Star Recipient</span></p>
+                <p class="text-sm md:text-base font-light italic">Three Day Pass: Beho, Breakthrough, Battles Beyond</p>
             </div>
 
             <div class="w-16 h-16 rounded-full bg-red-600 border-2 border-dashed border-white flex items-center justify-center shadow-lg hidden md:flex overflow-hidden">
-                <img src="/assets/84th_infantry_railsplitters.png" alt="84th Infantry" class="w-full h-full object-contain">
+                <img src="assets/84th_infantry_railsplitters.png" alt="84th Infantry" class="w-full h-full object-contain">
             </div>
         </div>
     </header>
@@ -38,12 +48,12 @@
         <div class="flex flex-row space-x-6 mb-4 transform -rotate-1">
             <div class="bg-white p-3 shadow-xl rotate-neg-2 hover:rotate-0 transition-transform duration-300 border border-gray-200">
                 <div class="w-48 h-60 bg-gray-300 overflow-hidden sepia-[.3]">
-                    <img src="/assets/Captain_James_V_Morgia.jpg" alt="Captain Jim" class="w-full h-full object-cover">
+                    <img src="assets/Captain_James_V_Morgia.jpg" alt="Captain Jim" class="w-full h-full object-cover">
                 </div>
             </div>
             <div class="bg-white p-3 shadow-xl rotate-pos-3 hover:rotate-0 transition-transform duration-300 border border-gray-200">
                 <div class="w-48 h-60 bg-[#1a202c] overflow-hidden">
-                    <img src="/assets/71PIkUqX5VL._SL1360_.jpg" alt="Book Cover" class="w-full h-full object-cover">
+                    <img src="assets/71PIkUqX5VL._SL1360_.jpg" alt="Book Cover" class="w-full h-full object-cover">
                 </div>
             </div>
         </div>
@@ -61,7 +71,7 @@
 
         <div class="text-center space-y-4">
             <div class="flex flex-wrap justify-center gap-3">
-                <button onclick="fillQuery('What happened at the Battle of Beho?')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Battle of Beho</button>
+                <button onclick="fillQuery('What happened at the Battle of Beho? What was your mission and what happened?')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Battle of Beho</button>
                 <button onclick="fillQuery('Tell me about your time in Paris.')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Time in Paris</button>
                 <button onclick="fillQuery('How did you get the Silver Star?')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Silver Star</button>
             </div>
@@ -74,19 +84,6 @@
 
             <div id="responseContainer" class="hidden flex flex-col gap-6 w-full text-left bg-white p-8 border border-[#d4cdba] shadow-sm relative">
                 
-                <div id="audioControls" class="flex items-center space-x-2 border-b border-gray-200 pb-4 mb-2">
-                    <button id="playBtn" class="bg-[#4b5320] text-white px-4 py-2 text-xs uppercase tracking-wider hover:bg-[#3a4119] flex items-center gap-2 rounded">
-                        <span>▶ Play</span>
-                    </button>
-                    <button id="pauseBtn" class="bg-gray-200 text-gray-700 px-4 py-2 text-xs uppercase tracking-wider hover:bg-gray-300 rounded">
-                        <span>II Pause</span>
-                    </button>
-                    <button id="resetBtn" class="bg-gray-200 text-gray-700 px-4 py-2 text-xs uppercase tracking-wider hover:bg-gray-300 rounded">
-                        <span>↻ Reset</span>
-                    </button>
-                    <span id="audioStatus" class="ml-2 text-xs text-gray-500 italic font-sans"></span>
-                </div>
-
                 <div class="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif">
                     <h3 class="uppercase text-xs font-bold text-gray-400 mb-2 tracking-widest">Archive Summary</h3>
                     <p id="summaryText"></p>
@@ -94,8 +91,41 @@
 
                 <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
                     <h3 class="uppercase text-xs font-bold text-gray-400 mb-4 tracking-widest">Excerpts from "Three Day Pass"</h3>
-                    <div id="excerptsList" class="space-y-6"></div>
+                    <div id="excerptsList" class="space-y-6">
+                        </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-2xl mt-12 pt-8 border-t-2 border-dashed border-[#8b7355]">
+            <h3 class="text-center text-[#8b7355] text-xs font-bold uppercase tracking-[0.2em] mb-8">Related Resources</h3>
+            
+            <div class="space-y-4">
+                
+                <div class="bg-white border border-[#d4cdba] p-4 flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-shadow">
+                    <div class="text-center md:text-left">
+                        <p class="font-bold text-[#2c3112] text-sm">Three Day Pass: Beho, Breakthrough, Battles Beyond</p>
+                        <p class="text-xs text-gray-500">Captain James Morgia's chronicles from World War II</p>
+                    </div>
+                    <a href="https://www.amazon.com/Three-Day-Pass-Breakthrough-Battles/dp/1636244131" target="_blank" class="bg-[#4b5320] text-white px-4 py-2 text-xs font-bold uppercase hover:bg-[#3a4119] transition-colors whitespace-nowrap">
+                        Buy Captain Jim's Book
+                    </a>
+                </div>
+
+                <div class="bg-white border border-[#d4cdba] p-4 flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-shadow">
+                    <div class="text-center md:text-left">
+                        <p class="font-bold text-[#2c3112] text-sm">History of the 84th Infantry Division</p>
+                        <a href="https://www.84thrailsplitters.com/history.html" target="_blank" class="text-xs text-gray-500 underline hover:text-red-700">View Division History</a>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-[#d4cdba] p-4 flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-shadow">
+                    <div class="text-center md:text-left">
+                        <p class="font-bold text-[#2c3112] text-sm">Silver Star Recipient Record</p>
+                        <a href="https://valor.militarytimes.com/recipient/recipient-130876/" target="_blank" class="text-xs text-gray-500 underline hover:text-red-700">View Military Times Record</a>
+                    </div>
+                </div>
+
             </div>
         </div>
 
