@@ -8,4 +8,5 @@ llama-index-core
 llama-index-embeddings-fastembed
 llama-index-llms-openai
 llama-index-readers-file
+fastembed
 chromadb
