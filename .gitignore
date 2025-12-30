@@ -1,28 +1,10 @@
-# --- Security (NEVER UPLOAD) ---
 .env
 .env.local
 .DS_Store
-
-# --- Python Junk ---
 venv/
-__pycache__/
-*.pyc
-scripts/__pycache__/
-
-# --- Node/Next.js Junk ---
 node_modules/
 .next/
-*.d.ts
-next-env.d.ts
-
-# --- Storage / Database ---
-# We generally DO want to track the chromadb folder if it's small,
-# but usually, we ignore the storage folder if it's large.
-# Since we renamed the folder in server.py to 'storage', let's ignore it
-# so you don't upload a massive binary file every time you test.
-storage/
-chroma_db/
-
-# --- Legacy/Test Scripts ---
+*.pyc
+__pycache__/
+scripts/__pycache__/
 test.py
-scripts/query.py

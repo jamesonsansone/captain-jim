@@ -1,11 +1,11 @@
 fastapi
 uvicorn
 python-dotenv
-langchain-community
-langchain-core
-langchain-openai
-chromadb
 openai
 requests
 pydantic
-numpy<2.0.0
+llama-index-core
+llama-index-embeddings-fastembed
+llama-index-llms-openai
+llama-index-readers-file
+chromadb

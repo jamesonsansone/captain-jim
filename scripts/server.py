@@ -22,8 +22,11 @@ load_dotenv()
 # Global dictionary to hold loaded AI models
 ai_resources = {}
 
-# Configuration (MUST MATCH INGEST.PY)
-STORAGE_DIR = "./storage" 
+# --- Configuration ---
+# Robust way to find the "storage" folder relative to this script
+# This ensures it works whether you run it from root or inside the scripts folder
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STORAGE_DIR = os.path.join(BASE_DIR, "storage")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,25 +35,22 @@ async def lifespan(app: FastAPI):
         if not os.getenv("OPENAI_API_KEY"):
             logger.error("❌ ERROR: OPENAI_API_KEY is missing.")
 
-        # 1. Initialize the Same Embedding Model as Ingest
-        # This is crucial. If this differs, retrieval will be garbage.
         logger.info("🔹 Loading FastEmbed Model...")
         Settings.embed_model = FastEmbedEmbedding(
             model_name="BAAI/bge-small-en-v1.5", 
             max_length=512
         )
-        Settings.llm = None  # We use OpenAI directly for generation to have more control
+        Settings.llm = None  # We use OpenAI directly for generation
 
-        # 2. Load the Index from Disk
         if not os.path.exists(STORAGE_DIR):
-             logger.error(f"❌ CRITICAL: {STORAGE_DIR} not found. Run ingest.py first!")
+             logger.error(f"❌ CRITICAL: Storage directory not found at {STORAGE_DIR}")
+             logger.error("Did you commit the 'storage' folder to git?")
         else:
             logger.info(f"🔹 Loading Index from {STORAGE_DIR}...")
             storage_context = StorageContext.from_defaults(persist_dir=STORAGE_DIR)
             index = load_index_from_storage(storage_context)
             
             # Create a retriever engine
-            # similarity_top_k=5 gets us the top 5 excerpts
             retriever = index.as_retriever(similarity_top_k=5)
             
             ai_resources["retriever"] = retriever
@@ -66,8 +66,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # --- CORS ---
+# This allows your Vercel frontend to talk to this Render backend
 origins = [
-    "https://captain-jim.vercel.app/",
+    "https://captain-jim.vercel.app",
     "http://127.0.0.1:5500",
     "http://localhost:5500",
     "http://localhost:3000"
@@ -75,7 +76,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -97,34 +98,33 @@ def clean_excerpt_text(text):
         return text[:cutoff+1]
     return text
 
+@app.get("/")
+async def health_check():
+    return {"status": "online", "message": "Captain Jim Archive is Active"}
+
 @app.post("/ask")
 async def ask_captain(request: QueryRequest):
     if "retriever" not in ai_resources:
         raise HTTPException(status_code=503, detail="AI System is not ready yet.")
 
     try:
-        # 1. Retrieve Nodes using LlamaIndex
         nodes = ai_resources["retriever"].retrieve(request.question)
         
-        # 2. Filter & Format
         valid_nodes = []
         for node in nodes:
             content = node.node.get_content().strip()
-            # Filter very short/empty nodes
             if len(content) < 50: 
                 continue
             valid_nodes.append(node)
 
         if not valid_nodes:
             return {
-                "summary": "I searched the archives but couldn't find specific details on that topic in Captain Jim's memoir. Please try asking about the Battle of Beho or his time in Paris.",
+                "summary": "I searched the archives but couldn't find specific details on that topic in Captain Jim's memoir.",
                 "excerpts": []
             }
 
-        # Prepare context for OpenAI
         context_text = "\n\n".join([f"Excerpt: {n.node.get_content()}" for n in valid_nodes])
 
-        # 3. Generate Historian Summary (OpenAI)
         system_instruction = (
             "You are an expert World War II historian. You are receiving a question about Captain James V. Morgia. "
             "Use the provided memoir excerpts to answer. \n"
@@ -146,11 +146,9 @@ async def ask_captain(request: QueryRequest):
         
         summary = completion.choices[0].message.content
 
-        # 4. Format Excerpts for UI
         excerpts_payload = []
-        for n in valid_nodes[:3]: # Top 3
+        for n in valid_nodes[:3]: 
             cleaned_text = clean_excerpt_text(n.node.get_content())
-            # Attempt to get file name from metadata if available, else generic
             source = n.node.metadata.get("file_name", "Memoir Archive")
             excerpts_payload.append({
                 "text": cleaned_text,
@@ -181,7 +179,7 @@ async def generate_audio(request: SpeakRequest):
             "stability": 0.35,
             "similarity_boost": 0.92,
             "style": 0.20,
-            "speed":0.79,
+            "speed": 0.8,
             "use_speaker_boost": True
         }
     }

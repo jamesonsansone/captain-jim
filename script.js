@@ -11,29 +11,37 @@ const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const audioStatus = document.getElementById('audioStatus');
 
+// -------------------------------------------------------------
+// CONFIGURATION: PRODUCTION vs LOCAL
+// -------------------------------------------------------------
+const RENDER_URL = "https://captain-jim.onrender.com"; 
+const LOCAL_URL = "http://127.0.0.1:8000";
+
+// Smart Switch: Uses Local URL if on localhost, otherwise uses Render URL
+const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
+    ? LOCAL_URL 
+    : RENDER_URL;
+// -------------------------------------------------------------
+
 let currentAudio = new Audio();
 let currentTextToRead = "";
 let isAudioLoading = false;
 
-// 1. Fill Query
 function fillQuery(text) {
     userQuery.value = text;
 }
 
-// 2. Search Logic
 async function handleSearch() {
     const query = userQuery.value.trim();
     if (!query) return;
 
-    // Reset UI
     loadingIndicator.classList.remove('hidden');
     responseContainer.classList.add('hidden');
-    
-    // Reset Audio completely on new search
     stopAndResetAudio(); 
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/ask', {
+        // Uses the dynamic API URL
+        const response = await fetch(`${API_BASE_URL}/ask`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question: query })
@@ -42,11 +50,9 @@ async function handleSearch() {
         const data = await response.json();
 
         if (response.ok) {
-            // Update Text
             summaryText.innerText = data.summary;
-            currentTextToRead = data.summary; // Save for audio
+            currentTextToRead = data.summary;
 
-            // Update Excerpts
             excerptsList.innerHTML = '';
             data.excerpts.forEach(excerpt => {
                 const div = document.createElement('div');
@@ -67,25 +73,20 @@ async function handleSearch() {
 
     } catch (error) {
         console.error(error);
-        alert("Server error. Ensure server.py is running.");
+        alert("Server error. Ensure server is running.");
         loadingIndicator.classList.add('hidden');
     }
 }
 
-// 3. Audio Logic
-
 async function playAudio() {
-    // If playing, do nothing
     if (!currentAudio.paused && currentAudio.currentTime > 0) return;
     
-    // If audio is loaded (paused), just resume
     if (currentAudio.src && currentAudio.src !== "") {
         currentAudio.play();
         audioStatus.innerText = "Playing...";
         return;
     }
 
-    // New Audio Request
     if (!currentTextToRead) return;
 
     try {
@@ -93,7 +94,8 @@ async function playAudio() {
         audioStatus.innerText = "Generating Voice...";
         playBtn.disabled = true;
 
-        const response = await fetch('http://127.0.0.1:8000/speak', {
+        // Uses the dynamic API URL
+        const response = await fetch(`${API_BASE_URL}/speak`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: currentTextToRead })
@@ -127,13 +129,9 @@ function pauseAudio() {
 function stopAndResetAudio() {
     currentAudio.pause();
     currentAudio.currentTime = 0;
-    // We DON'T clear src here if we want "Reset" to just mean "Go back to start"
-    // If you want Reset to mean "Clear buffer", uncomment next line:
-    // currentAudio.src = ""; 
     audioStatus.innerText = "Reset";
 }
 
-// Event Listeners
 askBtn.addEventListener('click', handleSearch);
 userQuery.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
