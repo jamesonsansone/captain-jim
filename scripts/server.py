@@ -67,8 +67,10 @@ app = FastAPI(lifespan=lifespan)
 
 # --- CORS ---
 # This allows your Vercel frontend to talk to this Render backend
+# --- CORS ---
 origins = [
-    "https://captain-jim.vercel.app",
+    "https://captain-jim.vercel.app",   # No slash
+    "https://captain-jim.vercel.app/",  # WITH slash (Crucial for Vercel)
     "http://127.0.0.1:5500",
     "http://localhost:5500",
     "http://localhost:3000"
