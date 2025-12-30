@@ -3,446 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Captain Jim - In His Own Words</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    
+    <title>Captain James Vincent Morgia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --army-green: #4b5320;
-            --paper-tan: #fdf6e3;
-            --ink-black: #2b2b2b;
-            --faded-brown: #8b7355;
-            --alert-red: #8b0000;
-        }
-
-        body {
-            background-color: var(--army-green);
-            color: var(--ink-black);
-            font-family: 'Courier Prime', 'Courier New', monospace;
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
-        }
-
-        header {
-            background-color: var(--army-green);
-            color: var(--paper-tan);
-            padding: 40px 20px 20px;
-            text-align: center;
-            border-bottom: 4px solid var(--faded-brown);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-        }
-
-        header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-            margin-top: 10px;
-            font-style: italic;
-        }
-
-        main {
-            max-width: 900px;
-            margin: 0 auto;
-            background-color: var(--paper-tan);
-            min-height: 100vh;
-            padding: 60px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
-
-        .photo-gallery {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .photo-placeholder {
-            width: 200px;
-            height: 250px;
-            background-color: #dcdcdc;
-            border: 4px solid white;
-            box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #888;
-            font-size: 0.8em;
-            transform: rotate(-2deg);
-        }
-        
-        .photo-placeholder:nth-child(2) {
-            transform: rotate(2deg);
-        }
-
-        /* SEARCH BAR */
-        .search-container {
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .input-wrapper {
-            display: flex;
-            max-width: 600px;
-            margin: 0 auto;
-            border: 2px solid var(--ink-black);
-            background: #fff;
-            position: relative;
-        }
-
-        input {
-            flex-grow: 1;
-            padding: 15px 20px;
-            font-size: 16px;
-            border: none;
-            background: transparent;
-            outline: none;
-            font-family: inherit;
-            color: var(--ink-black);
-            transition: opacity 0.3s;
-        }
-
-        input.searching { opacity: 0.5; pointer-events: none; }
-
-        .clear-btn {
-            background: transparent;
-            border: none;
-            font-size: 1.2em;
-            color: #999;
-            cursor: pointer;
-            padding: 0 10px;
-            display: none;
-        }
-        .clear-btn:hover { color: var(--alert-red); }
-
-        button.search-btn {
-            background: var(--ink-black);
-            color: var(--paper-tan);
-            border: none;
-            padding: 0 25px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-family: inherit;
-            transition: background 0.2s;
-        }
-
-        button.search-btn:hover { background: var(--alert-red); }
-
-        /* SUGGESTIONS SECTION */
-        .suggestions {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        .suggestion-label {
-            font-size: 0.8em;
-            text-transform: uppercase;
-            color: var(--faded-brown);
-            margin-bottom: 10px;
-        }
-        .suggestion-chips {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .chip {
-            background: #e8e0d2;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.2s;
-        }
-        .chip:hover {
-            background: var(--ink-black);
-            color: var(--paper-tan);
-            border-color: var(--ink-black);
-        }
-
-        .summary-section { margin-bottom: 60px; display: none; }
-
-        .section-label {
-            font-size: 0.9em;
-            color: var(--faded-brown);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 1px solid var(--faded-brown);
-            margin-bottom: 25px;
-            display: inline-block;
-            font-weight: bold;
-        }
-
-        .summary-text {
-            font-size: 1.1em;
-            max-width: 65ch; 
-            margin: 0 auto;
-            white-space: pre-wrap;
-            text-align: justify;
-        }
-
-        .excerpts-container { display: none; }
-        .excerpt-list { display: flex; flex-direction: column; gap: 40px; }
-
-        .audio-card {
-            background: #fff;
-            border-left: 6px solid var(--ink-black);
-            padding: 20px 30px;
-            position: relative;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .card-header {
-            font-style: italic;
-            font-weight: bold;
-            color: var(--faded-brown);
-            margin-bottom: 15px;
-            font-size: 0.9em;
-        }
-
-        .card-text {
-            font-family: 'Courier Prime', monospace;
-            font-size: 1em;
-            line-height: 1.8;
-            margin-bottom: 20px;
-            padding-left: 10px;
-        }
-
-        .audio-controls {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 8px 16px;
-            border: 1px solid var(--ink-black);
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .audio-controls:hover {
-            background: var(--ink-black);
-            color: var(--paper-tan);
-        }
-
-        .play-icon { font-size: 1.2em; }
-        .audio-label { font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            display: none;
-            color: var(--alert-red);
-            font-weight: bold;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+        body { font-family: 'Courier Prime', monospace; }
+        .rotate-neg-2 { transform: rotate(-2deg); }
+        .rotate-pos-3 { transform: rotate(3deg); }
     </style>
 </head>
-<body>
+<body class="min-h-screen bg-[#FDF6E3] text-gray-800 flex flex-col">
 
-    <header>
-        <h1>Captain James Vincent Morgia</h1>
-        <p>In His Own Words • Author of "Three Day Pass"</p>
+    <header class="bg-[#4b5320] text-white p-6 border-b-4 border-[#2c3112] shadow-lg">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="w-16 h-16 rounded-full bg-red-600 border-2 border-dashed border-white flex items-center justify-center shadow-lg hidden md:flex overflow-hidden">
+                <img src="./assets/84th_infantry_railsplitters.png" alt="84th Infantry" class="w-full h-full object-contain">
+            </div>
+
+            <div class="flex-1 text-center space-y-1">
+                <p class="text-xs md:text-sm uppercase tracking-[0.2em] text-gray-300">In His Own Words</p>
+                <h1 class="text-2xl md:text-4xl font-bold tracking-wider text-[#FDF6E3] py-1">CAPTAIN JAMES VINCENT MORGIA</h1>
+                <p class="text-sm md:text-base font-light">Author of <span class="italic">Three Day Pass</span></p>
+            </div>
+
+            <div class="w-16 h-16 rounded-full bg-red-600 border-2 border-dashed border-white flex items-center justify-center shadow-lg hidden md:flex overflow-hidden">
+                <img src="./assets/84th_infantry_railsplitters.png" alt="84th Infantry" class="w-full h-full object-contain">
+            </div>
+        </div>
     </header>
 
-    <main>
-        <div class="photo-gallery">
-            <div class="photo-placeholder">PHOTO 1<br>(Captain Jim)</div>
-            <div class="photo-placeholder">PHOTO 2<br>(84th Division)</div>
-        </div>
-
-        <div class="search-container">
-            <div class="input-wrapper">
-                <input type="text" id="question" 
-                       placeholder="Ask about Captain Jim's experience from his book 'Three Day Pass'..." 
-                       oninput="toggleClear()" 
-                       onkeypress="handleEnter(event)">
-                <button id="clearBtn" class="clear-btn" onclick="clearSearch()">✕</button>
-                <button class="search-btn" onclick="askArchive()">Search</button>
-            </div>
-        </div>
-
-        <div class="suggestions">
-            <div class="suggestion-label">Suggested Questions</div>
-            <div class="suggestion-chips">
-                <div class="chip" onclick="fillQuestion('What was your experience in the Battle of the Bulge?')">Battle of the Bulge</div>
-                <div class="chip" onclick="fillQuestion('What happened in the town of Beho?')">Battle of Beho</div>
-                <div class="chip" onclick="fillQuestion('Did you ever meet General Eisenhower?')">General Eisenhower</div>
-                <div class="chip" onclick="fillQuestion('Tell me about your time in Paris.')">Time in Paris</div>
-                <div class="chip" onclick="fillQuestion('What is the Three Day Pass?')">Three Day Pass</div>
-            </div>
-        </div>
-
-        <div id="loading" class="loading">...RETRIEVING RECORDS...</div>
-
-        <div id="summary-container" class="summary-section">
-            <div class="section-label">Mission Briefing</div>
-            <div id="summary-text" class="summary-text"></div>
-        </div>
-
-        <div id="excerpts-container" class="excerpts-container">
-            <div class="section-label">Transcripts from 'The Three Day Pass'</div>
-            <div id="excerpts-list" class="excerpt-list"></div>
-        </div>
-    </main>
-
-    <script>
-        const API_URL = "https://captain-jim.onrender.com"; 
-
-        function handleEnter(e) { if (e.key === "Enter") askArchive(); }
-        function toggleClear() {
-            const val = document.getElementById('question').value;
-            document.getElementById('clearBtn').style.display = val.length > 0 ? 'block' : 'none';
-        }
-        function clearSearch() {
-            document.getElementById('question').value = '';
-            toggleClear();
-            document.getElementById('question').focus();
-        }
+    <main class="flex-1 max-w-3xl w-full mx-auto p-6 flex flex-col items-center space-y-8">
         
-        function fillQuestion(text) {
-            document.getElementById('question').value = text;
-            toggleClear();
-            askArchive();
-        }
+        <div class="flex flex-row space-x-6 mb-4 transform -rotate-1">
+            <div class="bg-white p-3 shadow-xl rotate-neg-2 hover:rotate-0 transition-transform duration-300 border border-gray-200">
+                <div class="w-48 h-60 bg-gray-300 overflow-hidden sepia-[.3]">
+                    <img src="./assets/Captain_James_V_Morgia.jpg" alt="Captain Jim" class="w-full h-full object-cover">
+                </div>
+            </div>
+            <div class="bg-white p-3 shadow-xl rotate-pos-3 hover:rotate-0 transition-transform duration-300 border border-gray-200">
+                <div class="w-48 h-60 bg-[#1a202c] overflow-hidden">
+                    <img src="./assets/71PIkUqX5VL._SL1360_.jpg" alt="Book Cover" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
 
-        async function askArchive() {
-            const inputField = document.getElementById('question');
-            const question = inputField.value;
-            
-            if (!question) return;
+        <div class="w-full max-w-2xl relative">
+            <div class="bg-white border-2 border-black p-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <div class="flex flex-col md:flex-row">
+                    <textarea id="userQuery" placeholder="Ask about the Battle of Beho, Paris, or his Silver Star..." class="flex-1 p-4 bg-transparent outline-none resize-none text-sm h-20 placeholder-gray-500 font-mono"></textarea>
+                    <button id="askBtn" class="bg-[#2c2c2c] text-white md:px-10 py-3 font-bold hover:bg-black transition-colors flex items-center justify-center uppercase tracking-widest text-xs border-t-2 md:border-t-0 md:border-l-2 border-black">
+                        ASK JIM
+                    </button>
+                </div>
+            </div>
+        </div>
 
-            inputField.classList.add('searching');
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('summary-container').style.display = 'none';
-            document.getElementById('excerpts-container').style.display = 'none';
+        <div class="text-center space-y-4">
+            <div class="flex flex-wrap justify-center gap-3">
+                <button onclick="fillQuery('What happened at the Battle of Beho?')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Battle of Beho</button>
+                <button onclick="fillQuery('Tell me about your time in Paris.')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Time in Paris</button>
+                <button onclick="fillQuery('How did you get the Silver Star?')" class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320]">Silver Star</button>
+            </div>
+        </div>
 
-            try {
-                const response = await fetch(`${API_URL}/ask`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({question: question})
-                });
+        <div class="w-full">
+            <div id="loadingIndicator" class="hidden animate-pulse text-[#4b5320] font-bold tracking-widest text-sm text-center mb-6">
+                . . . SEARCHING ARCHIVES . . .
+            </div>
 
-                if (!response.ok) throw new Error("Server Error");
-                const data = await response.json();
+            <div id="responseContainer" class="hidden flex flex-col gap-6 w-full text-left bg-white p-8 border border-[#d4cdba] shadow-sm relative">
+                
+                <div id="audioControls" class="flex items-center space-x-2 border-b border-gray-200 pb-4 mb-2">
+                    <button id="playBtn" class="bg-[#4b5320] text-white px-4 py-2 text-xs uppercase tracking-wider hover:bg-[#3a4119] flex items-center gap-2 rounded">
+                        <span>▶ Play</span>
+                    </button>
+                    <button id="pauseBtn" class="bg-gray-200 text-gray-700 px-4 py-2 text-xs uppercase tracking-wider hover:bg-gray-300 rounded">
+                        <span>II Pause</span>
+                    </button>
+                    <button id="resetBtn" class="bg-gray-200 text-gray-700 px-4 py-2 text-xs uppercase tracking-wider hover:bg-gray-300 rounded">
+                        <span>↻ Reset</span>
+                    </button>
+                    <span id="audioStatus" class="ml-2 text-xs text-gray-500 italic font-sans"></span>
+                </div>
 
-                document.getElementById('summary-text').innerText = data.summary;
-                document.getElementById('summary-container').style.display = 'block';
+                <div class="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif">
+                    <h3 class="uppercase text-xs font-bold text-gray-400 mb-2 tracking-widest">Archive Summary</h3>
+                    <p id="summaryText"></p>
+                </div>
 
-                const list = document.getElementById('excerpts-list');
-                list.innerHTML = ''; 
+                <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
+                    <h3 class="uppercase text-xs font-bold text-gray-400 mb-4 tracking-widest">Excerpts from "Three Day Pass"</h3>
+                    <div id="excerptsList" class="space-y-6"></div>
+                </div>
+            </div>
+        </div>
 
-                data.excerpts.forEach(excerpt => {
-                    const card = document.createElement('div');
-                    card.className = 'audio-card';
-                    
-                    let sourceTitle = excerpt.chapter;
-                    if (sourceTitle.includes("/")) sourceTitle = "Memoir Excerpt"; 
-
-                    const cleanText = excerpt.text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
-                    card.innerHTML = `
-                        <div class="card-header">${sourceTitle}</div>
-                        <div class="card-text">"${excerpt.text}"</div>
-                        <div class="audio-controls" onclick="playAudio(this, '${cleanText}')">
-                            <span class="play-icon">▶</span>
-                            <span class="audio-label">Listen to Jim Reading</span>
-                        </div>
-                    `;
-                    list.appendChild(card);
-                });
-
-                if (data.excerpts.length > 0) {
-                    document.getElementById('excerpts-container').style.display = 'block';
-                }
-
-            } catch (error) {
-                alert("Error connecting to archive. Please try again.");
-                console.error(error);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-                inputField.classList.remove('searching');
-            }
-        }
-
-    // Global variable to track the currently playing audio
-    let currentAudio = null;
-    let currentButton = null;
-
-    async function playAudio(element, text) {
-        const icon = element.querySelector('.play-icon');
-        const label = element.querySelector('.audio-label');
-
-        // CASE 1: User clicks the button that is ALREADY playing (Pause/Stop)
-        if (currentAudio && currentButton === element && !currentAudio.paused) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0; // Reset to start
-            icon.innerText = "▶";
-            label.innerText = "Listen to Jim Reading";
-            currentAudio = null;
-            currentButton = null;
-            return;
-        }
-
-        // CASE 2: User clicks a NEW button (Stop previous, start new)
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-            // Reset the OLD button's UI
-            if (currentButton) {
-                const oldIcon = currentButton.querySelector('.play-icon');
-                const oldLabel = currentButton.querySelector('.audio-label');
-                oldIcon.innerText = "▶";
-                oldLabel.innerText = "Listen to Jim Reading";
-            }
-        }
-
-        // Start Loading UI for NEW button
-        icon.innerText = "⏳";
-        label.innerText = "Loading...";
-        currentButton = element;
-
-        try {
-            const response = await fetch(`${API_URL}/speak`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: text})
-            });
-
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            currentAudio = new Audio(url);
-            
-            currentAudio.play();
-            
-            icon.innerText = "⏸"; // Change to Pause icon while playing
-            label.innerText = "Stop / Pause";
-
-            // When audio naturally finishes
-            currentAudio.onended = () => {
-                icon.innerText = "▶";
-                label.innerText = "Listen to Jim Reading";
-                currentAudio = null;
-                currentButton = null;
-            };
-
-        } catch (error) {
-            icon.innerText = "❌";
-            label.innerText = "Failed";
-            console.error(error);
-            currentAudio = null;
-            currentButton = null;
-        }
-    }
-    </script>
+    </main>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -6,10 +6,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
 from openai import OpenAI
 from fastapi.responses import Response
+
+# --- LlamaIndex Imports ---
+from llama_index.core import StorageContext, load_index_from_storage, Settings
+from llama_index.embeddings.fastembed import FastEmbedEmbedding
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO)
@@ -17,38 +19,47 @@ logger = logging.getLogger("CaptainJimServer")
 
 load_dotenv()
 
+# Global dictionary to hold loaded AI models
 ai_resources = {}
+
+# Configuration (MUST MATCH INGEST.PY)
+STORAGE_DIR = "./storage" 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 STARTUP: Initializing AI Systems...")
+    logger.info("🚀 STARTUP: Initializing LlamaIndex System...")
     try:
         if not os.getenv("OPENAI_API_KEY"):
             logger.error("❌ ERROR: OPENAI_API_KEY is missing.")
-        
-        embedding_function = OpenAIEmbeddings()
-        
-        # Ensure this points to where you saved your DB
-        db_path = os.path.join(os.path.dirname(__file__), "..", "chroma_db")
-        
-        db = Chroma(persist_directory=db_path, embedding_function=embedding_function)
-        
-        # --- UPDATED RETRIEVER SETTINGS ---
-        # 1. search_type="mmr": Ensures diversity. It picks the best match, 
-        #    then penalizes the next match if it's too similar to the first.
-        # 2. k=5: We fetch 5 results now for more detail.
-        retriever = db.as_retriever(
-            search_type="mmr", 
-            search_kwargs={"k": 5, "fetch_k": 20}
+
+        # 1. Initialize the Same Embedding Model as Ingest
+        # This is crucial. If this differs, retrieval will be garbage.
+        logger.info("🔹 Loading FastEmbed Model...")
+        Settings.embed_model = FastEmbedEmbedding(
+            model_name="BAAI/bge-small-en-v1.5", 
+            max_length=512
         )
-        
-        openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        
-        ai_resources["retriever"] = retriever
-        ai_resources["openai"] = openai_client
-        logger.info("✅ AI SYSTEMS READY.")
+        Settings.llm = None  # We use OpenAI directly for generation to have more control
+
+        # 2. Load the Index from Disk
+        if not os.path.exists(STORAGE_DIR):
+             logger.error(f"❌ CRITICAL: {STORAGE_DIR} not found. Run ingest.py first!")
+        else:
+            logger.info(f"🔹 Loading Index from {STORAGE_DIR}...")
+            storage_context = StorageContext.from_defaults(persist_dir=STORAGE_DIR)
+            index = load_index_from_storage(storage_context)
+            
+            # Create a retriever engine
+            # similarity_top_k=5 gets us the top 5 excerpts
+            retriever = index.as_retriever(similarity_top_k=5)
+            
+            ai_resources["retriever"] = retriever
+            ai_resources["openai"] = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            
+            logger.info("✅ CAPTAIN JIM AI READY.")
+            
     except Exception as e:
-        logger.error(f"❌ CRITICAL ERROR: {e}")
+        logger.error(f"❌ CRITICAL STARTUP ERROR: {e}")
     yield
     ai_resources.clear()
 
@@ -56,14 +67,15 @@ app = FastAPI(lifespan=lifespan)
 
 # --- CORS ---
 origins = [
-    "https://captain-jim.vercel.app",
+    "https://captain-jim.vercel.app/",
+    "http://127.0.0.1:5500",
     "http://localhost:5500",
-    "http://127.0.0.1:5500"
+    "http://localhost:3000"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,24 +88,14 @@ class SpeakRequest(BaseModel):
     text: str
 
 def clean_excerpt_text(text):
-    """
-    Trims text to the last complete sentence to avoid trailing fragments.
-    """
-    # Find the last occurrence of major punctuation
+    """Trims text to the last complete sentence."""
     last_dot = text.rfind('.')
     last_excl = text.rfind('!')
     last_ques = text.rfind('?')
-    
     cutoff = max(last_dot, last_excl, last_ques)
-    
-    # If punctuation found, trim to it. Otherwise, return as is.
     if cutoff != -1:
         return text[:cutoff+1]
     return text
-
-@app.get("/")
-async def health_check():
-    return {"status": "online", "message": "Captain Jim Archive is Active"}
 
 @app.post("/ask")
 async def ask_captain(request: QueryRequest):
@@ -101,35 +103,41 @@ async def ask_captain(request: QueryRequest):
         raise HTTPException(status_code=503, detail="AI System is not ready yet.")
 
     try:
-        # 1. Retrieve
-        docs = ai_resources["retriever"].invoke(request.question)
+        # 1. Retrieve Nodes using LlamaIndex
+        nodes = ai_resources["retriever"].retrieve(request.question)
         
-        # 2. FILTERING: Remove "Header Only" or "Empty" chunks
-        valid_docs = []
-        for d in docs:
-            content = d.page_content.strip()
-            # If the chunk is just a Chapter header or very short, SKIP IT.
-            if len(content) < 100: 
+        # 2. Filter & Format
+        valid_nodes = []
+        for node in nodes:
+            content = node.node.get_content().strip()
+            # Filter very short/empty nodes
+            if len(content) < 50: 
                 continue
-            valid_docs.append(d)
+            valid_nodes.append(node)
 
-        # If we filtered everything out, return a polite "No info found"
-        if not valid_docs:
+        if not valid_nodes:
             return {
-                "summary": "I could not find specific details in the memoir regarding that query.",
+                "summary": "I searched the archives but couldn't find specific details on that topic in Captain Jim's memoir. Please try asking about the Battle of Beho or his time in Paris.",
                 "excerpts": []
             }
 
-        context_text = "\n\n".join([f"Excerpt: {d.page_content}" for d in valid_docs])
+        # Prepare context for OpenAI
+        context_text = "\n\n".join([f"Excerpt: {n.node.get_content()}" for n in valid_nodes])
 
-        # 3. Historian Prompt (Same as before)
+        # 3. Generate Historian Summary (OpenAI)
         system_instruction = (
-            "You are an expert World War II historian... [KEEP EXISTING PROMPT]"
+            "You are an expert World War II historian. You are receiving a question about Captain James V. Morgia. "
+            "Use the provided memoir excerpts to answer. \n"
+            "Style:\n"
+            "- Tone: Authoritative, warm, narrative.\n"
+            "- First mention: 'Captain James V. Morgia'. Subsequent: 'Captain Jim'.\n"
+            "- Perspective: Third person (He/Him).\n"
+            "- Content: Synthesize the excerpts into a cohesive story."
         )
 
         completion = ai_resources["openai"].chat.completions.create(
             model="gpt-4o",
-            temperature=0.4,
+            temperature=0.3,
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {request.question}"}
@@ -138,13 +146,15 @@ async def ask_captain(request: QueryRequest):
         
         summary = completion.choices[0].message.content
 
-        # 4. Format Excerpts
+        # 4. Format Excerpts for UI
         excerpts_payload = []
-        for doc in valid_docs:  # Use the VALID list
-            cleaned_text = clean_excerpt_text(doc.page_content)
+        for n in valid_nodes[:3]: # Top 3
+            cleaned_text = clean_excerpt_text(n.node.get_content())
+            # Attempt to get file name from metadata if available, else generic
+            source = n.node.metadata.get("file_name", "Memoir Archive")
             excerpts_payload.append({
                 "text": cleaned_text,
-                "chapter": doc.metadata.get("source", "Memoir Excerpt")
+                "chapter": source
             })
 
         return {"summary": summary, "excerpts": excerpts_payload}
@@ -164,17 +174,15 @@ async def generate_audio(request: SpeakRequest):
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
     
-    # --- UPDATED VOICE SETTINGS BASED ON YOUR SCREENSHOT ---
-# Inside @app.post("/speak")
     data = {
         "text": request.text,
         "model_id": "eleven_multilingual_v2",
         "voice_settings": {
-            "stability": 0.30,
-            "similarity_boost": 0.95,
+            "stability": 0.35,
+            "similarity_boost": 0.92,
             "style": 0.20,
-            "use_speaker_boost": True,
-            "speed": 0.8  
+            "speed":0.79,
+            "use_speaker_boost": True
         }
     }
     
