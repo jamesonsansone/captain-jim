@@ -119,6 +119,13 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
     // LOGIC: New Button Clicked -> Stop previous
     stopAudio();
 
+    // --- MOBILE FIX: PRIME THE AUDIO PUMP ---
+    // We play silence immediately to "unlock" the mobile audio channel
+    // while we wait for the slow server response.
+    currentAudio = new Audio(); // Create fresh instance
+    currentAudio.play().catch(() => {}); // Play nothing; ignore empty error
+    // ----------------------------------------
+
     // Visual Loading State
     const originalText = btnElement.innerHTML;
     btnElement.innerHTML = "<span>... Loading ...</span>";
@@ -135,8 +142,9 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             
+            // Swap the silent source for the real source
             currentAudio.src = url;
-            currentAudio.play();
+            currentAudio.play(); // This will now work on mobile!
             
             // Set Active States
             currentlyPlayingBtn = btnElement;
