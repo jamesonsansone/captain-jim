@@ -11,14 +11,7 @@ from fastapi.responses import Response
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from starlette.requests import Request # Needed for the limiter
-
-# Setup Limiter (Uses client IP address)
-limiter = Limiter(key_func=get_remote_address)
-
-# Add Limiter to App
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+from starlette.requests import Request 
 
 # --- LlamaIndex Imports ---
 from llama_index.core import StorageContext, load_index_from_storage, Settings
@@ -73,7 +66,16 @@ async def lifespan(app: FastAPI):
     yield
     ai_resources.clear()
 
+# --- APP INITIALIZATION ---
+# 1. Create the App first
 app = FastAPI(lifespan=lifespan)
+
+# 2. Setup Limiter
+limiter = Limiter(key_func=get_remote_address)
+
+# 3. Attach Limiter to the App (Now safe because 'app' exists)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- CORS ---
 origins = [
