@@ -138,5 +138,71 @@ async def ask_captain(request: Request, query: QueryRequest):
 
         context_text = "\n\n".join([f"Excerpt: {n.node.get_content()}" for n in valid_nodes])
 
-        system_instruction = (
-            "You are an expert World War 
+        system_instruction = """You are an expert World War II historian. You are receiving a question about Captain James V. Morgia. Use the provided memoir excerpts to answer.
+Style:
+- Tone: Authoritative, warm, narrative.
+- First mention: 'Captain James V. Morgia'. Subsequent: 'Captain Jim'.
+- Perspective: Third person (He/Him).
+- Content: Synthesize the excerpts into a cohesive story."""
+
+        completion = ai_resources["openai"].chat.completions.create(
+            model="gpt-4o",
+            temperature=0.3,
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {query.question}"}
+            ]
+        )
+        
+        summary = completion.choices[0].message.content
+
+        excerpts_payload = []
+        for n in valid_nodes[:3]: 
+            cleaned_text = clean_excerpt_text(n.node.get_content())
+            source = n.node.metadata.get("file_name", "Memoir Archive")
+            excerpts_payload.append({
+                "text": cleaned_text,
+                "chapter": source
+            })
+
+        return {"summary": summary, "excerpts": excerpts_payload}
+
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/speak")
+async def generate_audio(request: SpeakRequest):
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID")
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    
+    if not voice_id or not api_key:
+        raise HTTPException(status_code=500, detail="Audio configuration missing.")
+    
+    text_to_speak = request.text
+    
+    phonetic_corrections = {
+        "Beho": "Bay-ho",
+        "beho": "bay-ho"
+    }
+    
+    for word, phonetic in phonetic_corrections.items():
+        text_to_speak = text_to_speak.replace(word, phonetic)
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
+    
+    data = {
+        "text": text_to_speak,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.35,
+            "similarity_boost": 0.95,
+            "style": 0.20,
+            "speed": 0.77,
+            "use_speaker_boost": True
+        }
+    }
+    
+    response = requests.post(url, json=data, headers=headers)
+    return Response(content=response.content, media_type="audio/mpeg")
