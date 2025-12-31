@@ -33,11 +33,24 @@ async function handleSearch() {
     stopAudio(); // Stop any playing audio on new search
 
     try {
+        // Create a timeout controller to detect "Cold Start" hangs
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
         const response = await fetch(`${API_BASE_URL}/ask`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: query })
+            body: JSON.stringify({ question: query }),
+            signal: controller.signal // Attach the timer
         });
+        clearTimeout(timeoutId); // Clear timer if successful
+
+        // Handle Rate Limiting (429) specifically
+        if (response.status === 429) {
+            alert("Whoa there! Too many questions too fast. Please wait a minute.");
+            loadingIndicator.classList.add('hidden');
+            return;
+        }
 
         const data = await response.json();
 
@@ -84,13 +97,21 @@ async function handleSearch() {
             loadingIndicator.classList.add('hidden');
             responseContainer.classList.remove('hidden');
         } else {
-            alert("Error retrieving archives.");
+            alert("Archives unavailable. Status: " + response.status);
             loadingIndicator.classList.add('hidden');
         }
 
     } catch (error) {
         console.error(error);
-        alert("Server error. Ensure server is running.");
+        
+        // Specific Error Messages
+        if (error.name === 'AbortError') {
+            alert("The server is waking up! Please click 'Ask Jim' one more time.");
+        } else if (error.message.includes("Failed to fetch")) {
+            alert("Connection failed. Check your internet or disable AdBlockers.");
+        } else {
+            alert("System Error: " + error.message);
+        }
         loadingIndicator.classList.add('hidden');
     }
 }
@@ -142,9 +163,8 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
             
-            // Swap the silent source for the real source
             currentAudio.src = url;
-            currentAudio.play(); // This will now work on mobile!
+            currentAudio.play();
             
             // Set Active States
             currentlyPlayingBtn = btnElement;
