@@ -27,7 +27,6 @@ load_dotenv()
 ai_resources = {}
 
 # --- Configuration ---
-# Robust way to find the "storage" folder relative to this script
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STORAGE_DIR = os.path.join(BASE_DIR, "storage")
 
@@ -43,17 +42,15 @@ async def lifespan(app: FastAPI):
             model_name="BAAI/bge-small-en-v1.5", 
             max_length=512
         )
-        Settings.llm = None  # We use OpenAI directly for generation
+        Settings.llm = None 
 
         if not os.path.exists(STORAGE_DIR):
              logger.error(f"❌ CRITICAL: Storage directory not found at {STORAGE_DIR}")
-             logger.error("Did you commit the 'storage' folder to git?")
         else:
             logger.info(f"🔹 Loading Index from {STORAGE_DIR}...")
             storage_context = StorageContext.from_defaults(persist_dir=STORAGE_DIR)
             index = load_index_from_storage(storage_context)
             
-            # Create a retriever engine
             retriever = index.as_retriever(similarity_top_k=5)
             
             ai_resources["retriever"] = retriever
@@ -67,28 +64,19 @@ async def lifespan(app: FastAPI):
     ai_resources.clear()
 
 # --- APP INITIALIZATION ---
-# 1. Create the App first
 app = FastAPI(lifespan=lifespan)
 
-# 2. Setup Limiter
+# Setup Limiter
 limiter = Limiter(key_func=get_remote_address)
-
-# 3. Attach Limiter to the App (Now safe because 'app' exists)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# --- CORS ---
-origins = [
-    "https://captain-jim.vercel.app",   
-    "https://captain-jim.vercel.app/",  
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://localhost:3000"
-]
-
+# --- ROBUST CORS SETUP ---
+# This regex allows your main site AND any Vercel preview links
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"], # Localhost
+    allow_origin_regex=r"https://.*\.vercel\.app", # ANY Vercel Subdomain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -101,7 +89,6 @@ class SpeakRequest(BaseModel):
     text: str
 
 def clean_excerpt_text(text):
-    """Trims text to the last complete sentence."""
     last_dot = text.rfind('.')
     last_excl = text.rfind('!')
     last_ques = text.rfind('?')
@@ -114,14 +101,18 @@ def clean_excerpt_text(text):
 async def health_check():
     return {"status": "online", "message": "Captain Jim Archive is Active"}
 
+# --- UPDATED ENDPOINT ---
+# Note: 'request' must be the system Request object for the limiter to work.
+# We renamed the user input to 'query'.
 @app.post("/ask")
 @limiter.limit("5/minute") 
-async def ask_captain(request: QueryRequest, request_obj: Request): 
+async def ask_captain(request: Request, query: QueryRequest): 
     if "retriever" not in ai_resources:
         raise HTTPException(status_code=503, detail="AI System is not ready yet.")
 
     try:
-        nodes = ai_resources["retriever"].retrieve(request.question)
+        # We use 'query.question' now instead of 'request.question'
+        nodes = ai_resources["retriever"].retrieve(query.question)
         
         valid_nodes = []
         for node in nodes:
@@ -153,7 +144,7 @@ async def ask_captain(request: QueryRequest, request_obj: Request):
             temperature=0.3,
             messages=[
                 {"role": "system", "content": system_instruction},
-                {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {request.question}"}
+                {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {query.question}"}
             ]
         )
         
@@ -182,8 +173,6 @@ async def generate_audio(request: SpeakRequest):
     if not voice_id or not api_key:
         raise HTTPException(status_code=500, detail="Audio configuration missing.")
     
-    # --- PRONUNCIATION FIXES ---
-    # We swap the text for phonetic versions just before sending to AI
     text_to_speak = request.text
     
     phonetic_corrections = {
@@ -193,13 +182,12 @@ async def generate_audio(request: SpeakRequest):
     
     for word, phonetic in phonetic_corrections.items():
         text_to_speak = text_to_speak.replace(word, phonetic)
-    # ---------------------------
 
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
     
     data = {
-        "text": text_to_speak, # Sending the phonetic version
+        "text": text_to_speak,
         "model_id": "eleven_multilingual_v2",
         "voice_settings": {
             "stability": 0.35,
