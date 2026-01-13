@@ -32,9 +32,10 @@
             </div>
 
             <div class="flex-1 text-center space-y-1">
-                <p class="text-xs md:text-sm uppercase tracking-[0.2em] text-gray-300">In His Own Words • Chronicles from World War II • Silver Star Recipient</p>
+                <p class="text-xs md:text-sm uppercase tracking-[0.2em] text-gray-300">In His Own Words • Chronicles from World War II</p>
                 <h1 class="text-2xl md:text-4xl font-bold tracking-wider text-[#FDF6E3] py-1">CAPTAIN JAMES VINCENT MORGIA</h1>
                 <p class="text-sm md:text-base font-light italic">Three Day Pass: Beho, Breakthrough, Battles Beyond</p>
+                <p class="text-xs md:text-sm text-gray-400 mt-1 uppercase tracking-widest">Silver Star Recipient</p>
             </div>
 
             <div class="w-16 h-16 rounded-full bg-red-600 border-2 border-dashed border-white flex items-center justify-center shadow-lg hidden md:flex overflow-hidden">
@@ -73,32 +74,26 @@
             <p class="text-xs font-bold text-[#8b7355] uppercase tracking-widest mb-2">Explore the Archives</p>
             
             <div class="flex flex-wrap justify-center gap-3 max-w-2xl mx-auto">
-                
                 <button onclick="fillQuery('Describe the Battle of Beho in detail. What were the specific tactical challenges your unit faced against the German Panzers, and how did you manage the defense of the town?')" 
                         class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320] font-bold">
                     ⚔️ Battle of Beho
                 </button>
-
                 <button onclick="fillQuery('Tell me a story about your time in Paris. What was the atmosphere like in the city after the liberation, and what specific interactions did you have with the locals?')" 
                         class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320] font-bold">
                     🇫🇷 Life in Paris
                 </button>
-
                 <button onclick="fillQuery('Read me the official account of the actions that led to your Silver Star. What specific decisions did you have to make under fire?')" 
                         class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320] font-bold">
                     ⭐ The Silver Star
                 </button>
-
                 <button onclick="fillQuery('Beyond the fighting, what was daily life like for you and your men on the front lines? How did you eat, sleep, and keep morale high during the harsh winter?')" 
                         class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320] font-bold">
                     🪖 Life on the Front
                 </button>
-                
                 <button onclick="fillQuery('What can you tell me about the 84th Infantry Division, the Railsplitters? What made that unit special and what major campaigns did you participate in?')" 
                         class="bg-[#e6dfcc] px-4 py-2 rounded-full text-xs hover:bg-[#d4cdba] transition-colors border border-[#d4cdba] text-[#4b5320] font-bold">
                     🪓 The Railsplitters
                 </button>
-
             </div>
         </div>
 
@@ -107,32 +102,42 @@
                 . . . SEARCHING ARCHIVES . . .
             </div>
 
-            <div id="responseContainer" class="hidden flex flex-col gap-6 w-full text-left bg-white p-8 border border-[#d4cdba] shadow-sm relative">
-                
+            <div id="responseContainer" class="hidden flex flex-col gap-6 w-full text-left bg-white p-8 border border-[#d4cdba] shadow-sm relative mb-8">
                 <div class="prose prose-sm max-w-none text-gray-800 leading-relaxed">
                     <h3 class="uppercase text-xs font-bold text-gray-400 mb-2 tracking-widest">Archive Summary</h3>
                     <p id="summaryText"></p>
                 </div>
-
                 <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
                     <h3 class="uppercase text-xs font-bold text-gray-400 mb-4 tracking-widest">Excerpts from "Three Day Pass"</h3>
-                    <div id="excerptsList" class="space-y-6">
-                        </div>
+                    <div id="excerptsList" class="space-y-6"></div>
                 </div>
             </div>
         </div>
 
-        <div class="w-full max-w-2xl mt-12 pt-8 border-t-2 border-dashed border-[#8b7355]">
+        <div class="w-full max-w-2xl mt-4 mb-4">
+             <h3 class="text-center text-[#8b7355] text-xs font-bold uppercase tracking-[0.2em] mb-4">Veterans Day Tribute: Captain James V. Morgia at Christian Heritage School</h3>
+             <div class="relative w-full pb-[56.25%] h-0 border-4 border-[#2c3112] bg-black shadow-lg">
+                <iframe 
+                    class="absolute top-0 left-0 w-full h-full"
+                    src="https://www.youtube.com/embed/57Y88sR-njk?si=P0e18kzJhO-DxppB" 
+                    title="Veterans Day Tribute: Captain James V. Morgia at Christian Heritage School"
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <div class="w-full max-w-2xl mt-8 pt-8 border-t-2 border-dashed border-[#8b7355]">
             <h3 class="text-center text-[#8b7355] text-xs font-bold uppercase tracking-[0.2em] mb-8">Related Resources</h3>
             
             <div class="space-y-4">
-                
                 <div class="bg-white border border-[#d4cdba] p-4 flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-shadow">
                     <div class="text-center md:text-left">
                         <p class="font-bold text-[#2c3112] text-sm">Three Day Pass: Beho, Breakthrough, Battles Beyond</p>
                         <p class="text-xs text-gray-500">Captain James Morgia's chronicles from World War II</p>
                     </div>
-                    <a href="https://www.amazon.com/Three-Day-Pass-Breakthrough-Battles/dp/1546754849" target="_blank" class="bg-[#4b5320] text-white px-4 py-2 text-xs font-bold uppercase hover:bg-[#3a4119] transition-colors whitespace-nowrap">
+                    <a href="https://www.amazon.com/Three-Day-Pass-Breakthrough-Battles/dp/1636244131" target="_blank" class="bg-[#4b5320] text-white px-4 py-2 text-xs font-bold uppercase hover:bg-[#3a4119] transition-colors whitespace-nowrap">
                         Buy Captain Jim's Book
                     </a>
                 </div>
@@ -150,23 +155,24 @@
                         <a href="https://valor.militarytimes.com/recipient/recipient-130876/" target="_blank" class="text-xs text-gray-500 underline hover:text-red-700">View Military Times Record</a>
                     </div>
                 </div>
-
             </div>
         </div>
 
     </main>
+
     <footer class="w-full text-center py-8 mt-12 border-t-4 border-[#2c3112] bg-[#4b5320] text-[#fdf6e3]">
         <div class="max-w-3xl mx-auto px-6 space-y-4">
             <p class="text-xs uppercase tracking-widest opacity-80">
                 &copy; 2025 Captain James V. Morgia Archive
             </p>
             <p class="text-[10px] font-sans text-gray-300 leading-relaxed max-w-xl mx-auto">
-                Excerpts from <em>Three Day Pass: Beho, Breakthrough, Battles Beyond</em> used with explicit permission from 
+                Excerpts from <em>Three Day Pass</em> used with explicit permission from 
                 <span class="font-bold text-white">Mastery LLC</span>, the original publisher. 
                 All rights reserved. No part of this text may be reproduced without consent.
             </p>
         </div>
     </footer>
+    
     <script src="script.js"></script>
 </body>
 </html>
