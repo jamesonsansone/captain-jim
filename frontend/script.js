@@ -151,7 +151,7 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
 
     stopAudio();
 
-    // 1. Notify user we are starting the fetch
+    // 1. Notify user we are starting the fetch (Green Toast)
     showToast("Retrieving audio from archives... please wait.", false);
 
     // 2. Prime mobile audio driver
@@ -175,6 +175,7 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
         if (response.ok) {
             const blob = await response.blob();
             
+            // 4. CHECK FOR FAKE AUDIO (Quota Error)
             // If blob is tiny (< 1KB), it's the JSON error message hidden in a blob
             if (blob.size < 1000) {
                 console.warn("Audio blob too small, likely an API error message.");
