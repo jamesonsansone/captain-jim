@@ -144,7 +144,7 @@ Style:
 
         # CHANGED: Switched to gpt-4o-mini for speed
         completion = ai_resources["openai"].chat.completions.create(
-            model="gpt-5-nano",
+            model="gpt-4o-mini",
             temperature=0.3,
             messages=[
                 {"role": "system", "content": system_instruction},
