@@ -111,8 +111,6 @@ async def health_check():
     return {"status": "online", "message": "Captain Jim Archive is Active"}
 
 # --- UPDATED ENDPOINT ---
-# Note: 'request' must be the system Request object for the limiter to work.
-# We renamed the user input to 'query'.
 @app.post("/ask")
 @limiter.limit("5/minute") 
 async def ask_captain(request: Request, query: QueryRequest): 
@@ -120,7 +118,6 @@ async def ask_captain(request: Request, query: QueryRequest):
         raise HTTPException(status_code=503, detail="AI System is not ready yet.")
 
     try:
-        # We use 'query.question' now instead of 'request.question'
         nodes = ai_resources["retriever"].retrieve(query.question)
         
         valid_nodes = []
@@ -145,8 +142,9 @@ Style:
 - Perspective: Third person (He/Him).
 - Content: Synthesize the excerpts into a cohesive story."""
 
+        # CHANGED: Switched to gpt-4o-mini for speed
         completion = ai_resources["openai"].chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-nano",
             temperature=0.3,
             messages=[
                 {"role": "system", "content": system_instruction},

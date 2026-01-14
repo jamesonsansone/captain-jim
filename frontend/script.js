@@ -4,6 +4,8 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 const responseContainer = document.getElementById('responseContainer');
 const summaryText = document.getElementById('summaryText');
 const excerptsList = document.getElementById('excerptsList');
+const toast = document.getElementById('toast');
+const toastMessage = document.getElementById('toastMessage');
 
 // -------------------------------------------------------------
 // CONFIGURATION: PRODUCTION vs LOCAL
@@ -11,15 +13,33 @@ const excerptsList = document.getElementById('excerptsList');
 const RENDER_URL = "https://captain-jim.onrender.com"; 
 const LOCAL_URL = "http://127.0.0.1:8000";
 
-// Force Render URL for consistency
 const API_BASE_URL = RENDER_URL;
 // -------------------------------------------------------------
 
 let currentAudio = new Audio();
-let currentlyPlayingBtn = null; // To track active button
-let currentResetBtn = null;     // To track active reset button
+let currentlyPlayingBtn = null; 
+let currentResetBtn = null;     
 
-// Just fills the text, does NOT fire search automatically
+// --- TOAST NOTIFICATION SYSTEM ---
+function showToast(message, isError = true) {
+    toastMessage.innerText = message;
+    
+    // Style: Red for error, Green/Gold for info
+    if (isError) {
+        toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-900 text-white px-6 py-4 rounded shadow-2xl z-50 flex transition-all duration-300 w-[90%] max-w-md text-center border-2 border-[#fdf6e3]";
+    } else {
+        // Gold/Green for 'Info' or 'Loading' messages
+        toast.className = "fixed top-5 left-1/2 transform -translate-x-1/2 bg-[#4b5320] text-white px-6 py-4 rounded shadow-2xl z-50 flex transition-all duration-300 w-[90%] max-w-md text-center border-2 border-[#fdf6e3]";
+    }
+
+    toast.classList.remove('hidden');
+
+    // Hide automatically after 4 seconds
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 4000);
+}
+
 function fillQuery(text) {
     userQuery.value = text;
 }
@@ -30,24 +50,24 @@ async function handleSearch() {
 
     loadingIndicator.classList.remove('hidden');
     responseContainer.classList.add('hidden');
-    stopAudio(); // Stop any playing audio on new search
+    stopAudio(); 
 
     try {
-        // Create a timeout controller to detect "Cold Start" hangs
+        // Timeout Controller for Cold Starts (60 seconds)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 60000); 
 
         const response = await fetch(`${API_BASE_URL}/ask`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question: query }),
-            signal: controller.signal // Attach the timer
+            signal: controller.signal
         });
-        clearTimeout(timeoutId); // Clear timer if successful
+        clearTimeout(timeoutId);
 
-        // Handle Rate Limiting (429) specifically
+        // Handle Rate Limiting
         if (response.status === 429) {
-            alert("Whoa there! Too many questions too fast. Please wait a minute.");
+            showToast("Whoa there! Too many questions too fast. Please wait a minute.");
             loadingIndicator.classList.add('hidden');
             return;
         }
@@ -55,14 +75,10 @@ async function handleSearch() {
         const data = await response.json();
 
         if (response.ok) {
-            // 1. Set the Historian Summary (Text Only)
             summaryText.innerText = data.summary;
-
-            // 2. Build Excerpts with Dual-Button Interface (Play | Reset)
             excerptsList.innerHTML = '';
+            
             data.excerpts.forEach((excerpt, index) => {
-                
-                // Format the source text (Remove .txt, underscores)
                 let sourceDisplay = excerpt.chapter;
                 if (sourceDisplay.includes("Three_Day_Pass")) {
                     sourceDisplay = "From the memoir 'Three Day Pass'";
@@ -72,18 +88,15 @@ async function handleSearch() {
 
                 const div = document.createElement('div');
                 div.className = "bg-[#f4f1ea] p-4 border-l-4 border-[#4b5320] relative mb-4";
-                
                 div.innerHTML = `
                     <p class="mb-4 text-sm italic text-gray-700 leading-relaxed">"${excerpt.text}"</p>
                     <div class="flex justify-between items-end border-t border-gray-300 pt-3">
                         <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">— ${sourceDisplay}</span>
-                        
                         <div class="flex items-center gap-2">
                             <button id="reset-btn-${index}" onclick="resetSpecificAudio(${index})"
                                 class="hidden bg-gray-200 text-gray-600 px-3 py-1 text-xs uppercase tracking-wider hover:bg-red-100 hover:text-red-700 rounded transition-all">
                                 ↻ Reset
                             </button>
-
                             <button id="play-btn-${index}" onclick="playExcerptAudio(this, '${escapeHtml(excerpt.text)}', ${index})" 
                                     class="bg-[#4b5320] text-white px-3 py-1 text-xs uppercase tracking-wider hover:bg-[#3a4119] flex items-center gap-2 rounded transition-all">
                                 <span>▶ Hear Captain Jim</span>
@@ -97,20 +110,19 @@ async function handleSearch() {
             loadingIndicator.classList.add('hidden');
             responseContainer.classList.remove('hidden');
         } else {
-            alert("Archives unavailable. Status: " + response.status);
+            showToast("Archives unavailable. Status: " + response.status);
             loadingIndicator.classList.add('hidden');
         }
 
     } catch (error) {
         console.error(error);
-        
-        // Specific Error Messages
         if (error.name === 'AbortError') {
-            alert("The server is waking up! Please click 'Ask Jim' one more time.");
+            // Cold Start Message
+            showToast("The server is waking up! Please click 'Ask Jim' one more time.", false);
         } else if (error.message.includes("Failed to fetch")) {
-            alert("Connection failed. Check your internet or disable AdBlockers.");
+            showToast("Connection failed. Check your internet or disable AdBlockers.");
         } else {
-            alert("System Error: " + error.message);
+            showToast("System Error: " + error.message);
         }
         loadingIndicator.classList.add('hidden');
     }
@@ -123,7 +135,7 @@ function escapeHtml(text) {
 async function playExcerptAudio(btnElement, textToSpeak, index) {
     const relatedResetBtn = document.getElementById(`reset-btn-${index}`);
 
-    // LOGIC: If currently playing THIS button, Toggle Pause/Play
+    // If currently playing, treat click as Pause/Resume
     if (currentlyPlayingBtn === btnElement && currentAudio.src) {
         if (currentAudio.paused) {
             currentAudio.play();
@@ -137,17 +149,18 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
         return; 
     }
 
-    // LOGIC: New Button Clicked -> Stop previous
     stopAudio();
 
-    // --- MOBILE FIX: PRIME THE AUDIO PUMP ---
-    // We play silence immediately to "unlock" the mobile audio channel
-    // while we wait for the slow server response.
-    currentAudio = new Audio(); // Create fresh instance
-    currentAudio.play().catch(() => {}); // Play nothing; ignore empty error
-    // ----------------------------------------
+    // 1. Notify user we are starting the fetch
+    showToast("Retrieving audio from archives... please wait.", false);
 
-    // Visual Loading State
+    // 2. Prime mobile audio driver
+    currentAudio = new Audio(); 
+    currentAudio.play().catch(e => {
+        // Swallow the expected error from playing empty audio
+    });
+
+    // 3. UI Loading State
     const originalText = btnElement.innerHTML;
     btnElement.innerHTML = "<span>... Loading ...</span>";
     btnElement.disabled = true;
@@ -161,45 +174,55 @@ async function playExcerptAudio(btnElement, textToSpeak, index) {
 
         if (response.ok) {
             const blob = await response.blob();
+            
+            // If blob is tiny (< 1KB), it's the JSON error message hidden in a blob
+            if (blob.size < 1000) {
+                console.warn("Audio blob too small, likely an API error message.");
+                showToast("Captain Jim is on vocal rest (API Quota Limit Reached). Please try again next month!");
+                resetButton(btnElement);
+                return;
+            }
+
             const url = URL.createObjectURL(blob);
-            
             currentAudio.src = url;
-            currentAudio.play();
             
-            // Set Active States
-            currentlyPlayingBtn = btnElement;
-            currentResetBtn = relatedResetBtn;
+            // 5. Play real audio
+            currentAudio.play()
+                .then(() => {
+                    // Success!
+                    currentlyPlayingBtn = btnElement;
+                    currentResetBtn = relatedResetBtn;
+                    btnElement.classList.add('playing-audio'); 
+                    btnElement.innerHTML = "<span>II Pause</span>";
+                    btnElement.disabled = false;
+                    if (relatedResetBtn) relatedResetBtn.classList.remove('hidden');
+                })
+                .catch(e => {
+                    console.error("Playback failed:", e);
+                    showToast("Audio playback failed. Please try clicking again.");
+                    resetButton(btnElement);
+                });
 
-            // Update UI: Show Pause, Show Reset
-            btnElement.classList.add('playing-audio'); 
-            btnElement.innerHTML = "<span>II Pause</span>";
-            btnElement.disabled = false;
-            
-            if (relatedResetBtn) relatedResetBtn.classList.remove('hidden');
-
-            // When audio finishes naturally
             currentAudio.onended = () => {
                 resetSpecificAudio(index);
             };
 
         } else {
-            alert("Audio Error");
+            showToast("Audio Error: " + response.statusText);
             resetSpecificAudio(index);
         }
     } catch (e) {
         console.error(e);
-        alert("Connection Error");
+        showToast("Connection Error while fetching audio.");
         resetSpecificAudio(index);
     }
 }
 
-// Global Stop (used when switching tracks or searching)
 function stopAudio() {
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
     }
-    // Reset UI of whatever was playing
     if (currentlyPlayingBtn) {
         currentlyPlayingBtn.innerHTML = "<span>▶ Hear Captain Jim</span>";
         currentlyPlayingBtn.classList.remove('playing-audio');
@@ -212,7 +235,6 @@ function stopAudio() {
     }
 }
 
-// Specific Reset for the little buttons
 function resetSpecificAudio(index) {
     const playBtn = document.getElementById(`play-btn-${index}`);
     const resetBtn = document.getElementById(`reset-btn-${index}`);
@@ -232,9 +254,14 @@ function resetSpecificAudio(index) {
         resetBtn.classList.add('hidden');
     }
 
-    // Clear global trackers if they matched this specific index
     if (currentlyPlayingBtn === playBtn) currentlyPlayingBtn = null;
     if (currentResetBtn === resetBtn) currentResetBtn = null;
+}
+
+function resetButton(btn) {
+    btn.innerHTML = "<span>▶ Hear Captain Jim</span>";
+    btn.classList.remove('playing-audio');
+    btn.disabled = false;
 }
 
 askBtn.addEventListener('click', handleSearch);
