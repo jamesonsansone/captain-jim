@@ -3,7 +3,8 @@
 // The corpus is tiny (120 chunks), so we bundle the precomputed OpenAI
 // embeddings and do a plain cosine scan per query — microseconds, no DB.
 
-import embeddingsData from "./embeddings.json";
+// Import attribute required for JSON under native ESM (Node 22 on Vercel).
+import embeddingsData from "./embeddings.json" with { type: "json" };
 
 export interface MemoirChunk {
   id: string;

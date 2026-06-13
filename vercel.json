@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/ask.ts": { "maxDuration": 30 },
+    "api/ask.ts": { "maxDuration": 30, "includeFiles": "lib/embeddings.json" },
     "api/speak.ts": { "maxDuration": 30 }
   }
 }

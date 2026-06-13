@@ -2,6 +2,7 @@
   "name": "captain-jim",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "ingest": "node --env-file=.env scripts/ingest.mjs",
     "test_rag": "node --env-file=.env scripts/test_rag.mjs",

@@ -6,8 +6,8 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import OpenAI from "openai";
-import { retrieve, EMBEDDING_MODEL, type ScoredChunk } from "../lib/retrieve";
-import { checkRateLimit } from "../lib/ratelimit";
+import { retrieve, EMBEDDING_MODEL, type ScoredChunk } from "../lib/retrieve.js";
+import { checkRateLimit } from "../lib/ratelimit.js";
 
 const MIN_CHUNK_CHARS = 50;
 const CHAT_MODEL = "gpt-4o-mini";

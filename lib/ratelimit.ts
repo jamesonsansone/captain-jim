@@ -27,9 +27,15 @@ export function getClientIp(req: VercelRequest): string {
   return "127.0.0.1";
 }
 
-/** Returns true if the request is allowed, false if it should be rejected (429). */
+/** Returns true if the request is allowed, false if it should be rejected (429).
+ *  Fails open: any limiter/Upstash error allows the request rather than 500ing. */
 export async function checkRateLimit(req: VercelRequest): Promise<boolean> {
   if (!limiter) return true;
-  const { success } = await limiter.limit(getClientIp(req));
-  return success;
+  try {
+    const { success } = await limiter.limit(getClientIp(req));
+    return success;
+  } catch (e) {
+    console.error("rate limit check failed (allowing request):", e);
+    return true;
+  }
 }

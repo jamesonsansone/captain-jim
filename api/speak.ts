@@ -2,7 +2,7 @@
 // Same voice settings, model, and Beho -> Bay-ho phonetic fix as the original.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { checkRateLimit } from "../lib/ratelimit";
+import { checkRateLimit } from "../lib/ratelimit.js";
 
 const PHONETIC_CORRECTIONS: Record<string, string> = {
   Beho: "Bay-ho",
