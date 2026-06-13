@@ -8,12 +8,11 @@ const toast = document.getElementById('toast');
 const toastMessage = document.getElementById('toastMessage');
 
 // -------------------------------------------------------------
-// CONFIGURATION: PRODUCTION vs LOCAL
+// CONFIGURATION
 // -------------------------------------------------------------
-const RENDER_URL = "https://captain-jim.onrender.com"; 
-const LOCAL_URL = "http://127.0.0.1:8000";
-
-const API_BASE_URL = RENDER_URL;
+// Same-origin Vercel serverless functions live under /api.
+// (Previously a separate Render backend: https://captain-jim.onrender.com)
+const API_BASE_URL = "/api";
 // -------------------------------------------------------------
 
 let currentAudio = new Audio();
